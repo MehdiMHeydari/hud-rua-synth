@@ -1,0 +1,46 @@
+name: drawer_store_close_astra
+prompt: The drawer starts closed. Open it, put both the yellow block and the red block inside the drawer, and close the drawer again.
+# Astra variant of drawer_store_close (Astra 2/5 with one block): a second block on the other
+# side of the table, so two fetch-and-place trips between open and close, and the second drop
+# must not knock out the first.
+objects:
+  - {name: cabinet, shape: drawer, size: [0.25, 0.30, 0.14], color: wood, mass: 0.5,
+     x: [0.62, 0.68], y: [-0.05, 0.1], yaw: [-15, 15], travel: 0.18, damping: 2.0, start: 0.0}
+  - {name: block, shape: box, size: [0.04, 0.04, 0.04], color: yellow, x: [0.4, 0.48], y: [-0.38, -0.33]}
+  - {name: block2, shape: box, size: [0.04, 0.04, 0.04], color: red, x: [0.4, 0.48], y: [0.33, 0.38]}
+success:
+  inside:
+    - {object: block, container: cabinet}
+    - {object: block2, container: cabinet}
+  closed: {object: cabinet, fraction: 0.05}
+# As drawer_store_close, with the two blocks set side by side on the tray (5.5 cm either side of its centreline).
+oracle:
+  - {at: cabinet.handle, offset: [0, 0, 0.10], gripper: open}
+  - {at: cabinet.handle, gripper: open}
+  - {at: cabinet.handle, gripper: closed}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: closed}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: open}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0.10], gripper: open}
+  - {at: block, offset: [0, 0, 0.15], gripper: open}
+  - {at: block, gripper: open}
+  - {at: block, gripper: closed}
+  - {at: block, offset: [0, 0, 0.15], gripper: closed}
+  - {at: cabinet, offset: [-0.22, -0.055, 0.20], gripper: closed}
+  - {at: cabinet, offset: [-0.22, -0.055, 0.045], gripper: closed}
+  - {at: cabinet, offset: [-0.22, -0.055, 0.045], gripper: open}
+  - {at: cabinet, offset: [-0.22, -0.055, 0.20], gripper: open}
+  - {at: block2, offset: [0, 0, 0.15], gripper: open}
+  - {at: block2, gripper: open}
+  - {at: block2, gripper: closed}
+  - {at: block2, offset: [0, 0, 0.15], gripper: closed}
+  - {at: cabinet, offset: [-0.22, 0.055, 0.20], gripper: closed}
+  - {at: cabinet, offset: [-0.22, 0.055, 0.045], gripper: closed}
+  - {at: cabinet, offset: [-0.22, 0.055, 0.045], gripper: open}
+  - {at: cabinet, offset: [-0.22, 0.055, 0.20], gripper: open}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0.10], gripper: open}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: open}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: closed}
+  - {at: cabinet.handle, gripper: closed}
+  - {at: cabinet.handle, gripper: open}
+  - {at: cabinet.handle, offset: [0, 0, 0.10], gripper: open}
+knobs: {start_open: 0.0, blocks: 2}

@@ -28,7 +28,7 @@ from hud.eval import SubprocessRuntime, Task, Taskset  # noqa: E402
 
 MODEL = os.environ.get("HUD_LLM_MODEL", "gpt-6-luna")
 TASK = os.environ.get("TASK", "lift_cube")
-STEPS = int(os.environ.get("STEPS", "40"))  # literature uses 40-100; ~10x the oracle's 4 moves
+STEPS = int(os.environ.get("STEPS", "40"))  # sol 40; Astra 60 (Lukass: design for the top model, <=150 turns)
 EFFORT = os.environ.get("EFFORT", "medium")  # reasoning effort swings scores a lot: pin and record it
 EPISODES = int(os.environ.get("EPISODES", "1"))
 SEED0 = int(os.environ.get("SEED0", "0"))
@@ -58,19 +58,22 @@ async def main() -> None:
     print(f"job={job.id}")
     k, n = sum((r.reward or 0) >= 1 for r in job.runs), len(job.runs)
     errors = sum(bool(r.trace.is_error) for r in job.runs)  # crashed rollouts are not model failures
+    # Episodes that used the whole step budget: a high count means "needs more steps", not "can't do it".
+    capped = sum(len(r.trace.steps) >= STEPS for r in job.runs if (r.reward or 0) < 1)
     lo, hi = wilson(k, n)
     verdict = "too easy" if lo > 0.30 else "too hard" if hi < 0.05 else "in band" if 0.05 <= k / n <= 0.30 else "unclear"
     if errors:
         verdict = f"INVALID: {errors}/{n} rollouts errored (harness/spec bug, not model failures)"
     cost = n * COST_PER_EPISODE.get(MODEL, 0.0)
-    print(f"{TASK}: {k}/{n} = {k / n:.0%} (90% CI {lo:.0%}-{hi:.0%}) -> {verdict}; est cost ${cost:.2f}")
+    print(f"{TASK}: {k}/{n} = {k / n:.0%} (90% CI {lo:.0%}-{hi:.0%}) -> {verdict}; "
+          f"{capped} failures hit the {STEPS}-step cap; est cost ${cost:.2f}")
     save_traces(job)
     log = Path(__file__).parents[1] / "runs" / "log.jsonl"
     log.parent.mkdir(exist_ok=True)
     with log.open("a") as f:
         f.write(json.dumps({"time": time.strftime("%Y-%m-%d %H:%M"), "task": TASK, "model": MODEL, "steps": STEPS,
                             "effort": EFFORT, "cameras": os.environ.get("CAMERAS", "top,wrist"), "seed0": SEED0,
-                            "k": k, "n": n, "errors": errors, "job": job.id, "est_cost": round(cost, 3)}) + "\n")
+                            "k": k, "n": n, "errors": errors, "capped": capped, "job": job.id, "est_cost": round(cost, 3)}) + "\n")
 
 
 def save_traces(job) -> None:

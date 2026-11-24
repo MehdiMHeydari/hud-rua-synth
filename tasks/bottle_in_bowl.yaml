@@ -1,0 +1,24 @@
+name: bottle_in_bowl
+prompt: Put the small white bottle into the turquoise bowl. Leave the mug where it is.
+# First task on scanned library assets (assets/catalog.yaml). The mug is a second container and a
+# distractor: "into the container" alone would be ambiguous. Bottle is 9.7 cm tall, bowl 8.2 cm:
+# released upright on the bowl floor its bottom is well under the rim. Grasp 2 cm above the bottle's
+# centre so the palm clears its cap.
+# Knobs: distractor containers (mug), target container size (bowl 15 cm; ramekin rejected at admission).
+objects:
+  - {name: bottle, shape: asset, asset: pill_bottle, x: [0.42, 0.48], y: [-0.20, -0.14]}
+  - {name: bowl, shape: asset, asset: bowl, x: [0.52, 0.58], y: [0.06, 0.12]}
+  - {name: mug, shape: asset, asset: mug, x: [0.64, 0.68], y: [-0.20, -0.16], yaw: [-30, 30]}
+success:
+  inside: {object: bottle, container: bowl}
+  unmoved: {objects: [mug], tol: 0.03}
+oracle:
+  - {at: bottle, offset: [0, 0, 0.17], gripper: open}
+  - {at: bottle, offset: [0, 0, 0.02], gripper: open}
+  - {at: bottle, offset: [0, 0, 0.02], gripper: closed}
+  - {at: bottle, offset: [0, 0, 0.17], gripper: closed}
+  - {at: bowl, offset: [0, 0, 0.17], gripper: closed}
+  - {at: bowl, offset: [0, 0, 0.06], gripper: closed}
+  - {at: bowl, offset: [0, 0, 0.06], gripper: open}
+  - {at: bowl, offset: [0, 0, 0.17], gripper: open}
+knobs: {distractor_containers: 1, target: bowl}

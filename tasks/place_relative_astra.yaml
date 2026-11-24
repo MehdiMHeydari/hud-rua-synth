@@ -1,0 +1,35 @@
+name: place_relative_astra
+prompt: A person stands at the robot's left side of the table, facing across it toward the robot's right side. Put the red cube down on the table 10 cm to that person's left of the blue cube, and put the yellow cube down on the table 10 cm closer to that person than the green cube (both centre to centre). Leave the other cubes where they are.
+# Astra variant of place_relative (Astra 4/5 with one relation): two placements in the person's
+# frame along both of its axes (their left = +x, toward them = +y), each from a different anchor.
+objects:
+  - {name: red, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.35, 0.42], y: [0.15, 0.25]}
+  - {name: blue, shape: box, size: [0.05, 0.05, 0.05], color: blue, x: [0.5, 0.58], y: [0.0, 0.08]}
+  - {name: green, shape: box, size: [0.05, 0.05, 0.05], color: green, x: [0.65, 0.72], y: [-0.28, -0.18]}
+  - {name: yellow, shape: box, size: [0.05, 0.05, 0.05], color: yellow, x: [0.35, 0.42], y: [-0.3, -0.2]}
+  - {name: orange, shape: box, size: [0.05, 0.05, 0.05], color: orange, x: [0.68, 0.75], y: [0.18, 0.26]}
+  - {name: purple, shape: box, size: [0.05, 0.05, 0.05], color: purple, x: [0.28, 0.33], y: [-0.08, 0.0]}
+  - {name: white, shape: box, size: [0.05, 0.05, 0.05], color: white, x: [0.52, 0.58], y: [-0.25, -0.18]}
+success:
+  near_offset:
+    - {object: red, anchor: blue, offset: [0.10, 0], radius: 0.03}
+    - {object: yellow, anchor: green, offset: [0, 0.10], radius: 0.03}
+  unmoved: {objects: [blue, green, orange, purple, white], tol: 0.03}
+oracle:
+  - {at: red, offset: [0, 0, 0.15], gripper: open}
+  - {at: red, gripper: open}
+  - {at: red, gripper: closed}
+  - {at: red, offset: [0, 0, 0.15], gripper: closed}
+  - {at: blue, offset: [0.10, 0, 0.15], gripper: closed}
+  - {at: blue, offset: [0.10, 0, 0.005], gripper: closed}
+  - {at: blue, offset: [0.10, 0, 0.005], gripper: open}
+  - {at: blue, offset: [0.10, 0, 0.15], gripper: open}
+  - {at: yellow, offset: [0, 0, 0.15], gripper: open}
+  - {at: yellow, gripper: open}
+  - {at: yellow, gripper: closed}
+  - {at: yellow, offset: [0, 0, 0.15], gripper: closed}
+  - {at: green, offset: [0, 0.10, 0.15], gripper: closed}
+  - {at: green, offset: [0, 0.10, 0.005], gripper: closed}
+  - {at: green, offset: [0, 0.10, 0.005], gripper: open}
+  - {at: green, offset: [0, 0.10, 0.15], gripper: open}
+knobs: {frame: side_person, relations: 2, distractors: 3, radius: 0.03}

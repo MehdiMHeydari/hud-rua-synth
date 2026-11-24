@@ -3,9 +3,17 @@
 You turn an intent (e.g. "test whether agents can chain open-place-close") into one task spec,
 `tasks/<name>.yaml`, that passes every gate. You never write physics or scene code inside a spec.
 
+Photo input: `python rua/intent.py photo.jpg` turns a real tabletop photo into objects mapped to the
+blocks below plus 1-2 candidate intents. Treat it as a draft: re-check every `maps_to` against
+rua/spec.py (it can miss objects or mislabel them), drop "no match" objects, then proceed as for text.
+
 ## Building blocks (the only vocabulary; rua/spec.py is the source of truth)
 - Shapes: box, cylinder, sphere (free); hook (free, compound, part `handle`); drawer (articulated,
   part `handle`, fields `travel`, `damping`, `start`); hole_block (fixed, field `hole`); zone (fixed, visual only).
+- Scanned assets: `{shape: asset, asset: <id>}` with an `admitted: true` id from `assets/catalog.yaml`; size and
+  mass come from the card (never set `size`; no `color`, they are textured). Body origin = bbox centre, so
+  predicates treat it like a box of the card size. Use `graspable`/`hollow` from the card: only graspable
+  ones can be picked, only hollow ones can be an `inside` container (centre within the rim, bottom below it).
 - Success predicates (all must hold, graded on the final state): lifted, opened, closed, inserted,
   in_zone, inside, stacked, near_offset, unmoved.
 - Placement: `x`, `y`, `yaw` ranges, sampled per seed. Keep everything reachable (x 0.3-0.8 at table height)
@@ -19,8 +27,8 @@ You turn an intent (e.g. "test whether agents can chain open-place-close") into 
   closed position; add `start * travel` yourself for a drawer that starts open.
 - Gripping a part can move it (closing on a drawer tab nudges the drawer ~2 cm); push with closed
   fingers when you only need to push.
-- `success` holds one predicate of each kind, so "two blocks inside" isn't expressible yet: ask for a
-  new building block instead of faking it.
+- A `success` kind takes one predicate or a list (all must hold), e.g. two blocks `inside` the drawer.
+  Anything else not expressible: ask for a new building block instead of faking it.
 
 ## Rules
 - The prompt states every starting state ("The drawer starts closed") and nothing the grader checks

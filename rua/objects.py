@@ -1,12 +1,17 @@
 """Object types a spec can use: primitives, compound tools (boxes in one free body), articulated
-templates (boxes + a joint), and fixed templates (boxes or a visual marker, no joint).
+templates (boxes + a joint), fixed templates (boxes or a visual marker, no joint), and scanned
+assets from the curated library (assets/catalog.yaml).
 
 Each type knows how to build itself in MjSpec, where its base sits, and where its named parts
 are (e.g. a drawer's handle), so oracle plans can target parts without reading the sim.
 """
 
+from functools import lru_cache
+from pathlib import Path
+
 import mujoco
 import numpy as np
+import yaml
 
 GEOMS = {"box": mujoco.mjtGeom.mjGEOM_BOX, "cylinder": mujoco.mjtGeom.mjGEOM_CYLINDER,
          "sphere": mujoco.mjtGeom.mjGEOM_SPHERE}
@@ -14,6 +19,10 @@ PRIMITIVES = tuple(GEOMS)
 COMPOUND = ("hook",)  # free bodies made of several boxes
 ARTICULATED = ("drawer",)
 FIXED = ("hole_block", "zone")
+ASSET = ("asset",)  # a free body from the library; size and mass come from its catalog card
+
+ASSET_DIR = Path(__file__).parents[1] / "assets"
+CATALOG = {c["id"]: c for c in yaml.safe_load((ASSET_DIR / "catalog.yaml").read_text())["assets"]}
 
 WALL = 0.01  # cabinet wall thickness (m)
 HANDLE_OUT = 0.06  # pull tab length out of the drawer face
@@ -38,7 +47,7 @@ def part_offset(shape: str, size: list[float], part: str | None) -> np.ndarray:
 
 
 def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mass: float,
-        travel: float = 0.2, damping: float = 2.0, hole: float = 0.04) -> None:
+        travel: float = 0.2, damping: float = 2.0, hole: float = 0.04, asset: str | None = None) -> None:
     """Add one object to the scene. Primitives and compounds are free bodies; templates are fixed to the table."""
     if shape in PRIMITIVES:
         body = spec.worldbody.add_body(name=name)
@@ -52,6 +61,9 @@ def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mas
         _add_drawer(spec, name, size, rgba, mass, travel, damping)
     elif shape == "hole_block":
         _add_hole_block(spec, name, size, rgba, hole)
+    elif shape == "asset":
+        centre, _, mass_at_1000 = measure(asset)
+        _add_asset(spec, name, asset, density=1000 * mass / mass_at_1000, offset=-centre)
     elif shape == "zone":
         # Paint on the table: contype/conaffinity 0 so it is seen but never touched.
         spec.worldbody.add_body(name=name).add_geom(type=GEOMS["cylinder"], size=[size[0] / 2, 0.0005],
@@ -114,6 +126,52 @@ def _add_hole_block(spec, name, size, rgba, hole) -> None:
                       ([d / 2 - tx, 0, h / 2], [tx, hole / 2, h / 2]),  # back/front walls, between them
                       ([-(d / 2 - tx), 0, h / 2], [tx, hole / 2, h / 2])):
         body.add_geom(type=GEOMS["box"], pos=pos, size=half, rgba=rgba)
+
+
+def _add_asset(spec, name, asset, density, offset) -> None:
+    """Copy a library object's meshes and geoms (as its model.xml defines them) into one free body.
+    Only reads the downloaded XML/meshes. The visual mesh is massless; the convex collision hulls
+    carry the mass at `density`. `offset` puts the body origin at the collision bbox centre, so the
+    asset behaves like a box of its card size for placement and every predicate."""
+    folder = ASSET_DIR / "gso" / "models" / CATALOG[asset]["source"]
+    if not (folder / "model.xml").exists():
+        raise FileNotFoundError(f"{folder} missing: fetch it with the command at the top of assets/catalog.yaml")
+    src = mujoco.MjSpec.from_file(str(folder / "model.xml"))
+    for t in src.textures:
+        spec.add_texture(name=f"{name}_{t.name}", type=t.type, file=str(folder / t.file))
+    for m in src.materials:
+        mat = spec.add_material(name=f"{name}_{m.name}", specular=m.specular, shininess=m.shininess)
+        mat.textures = [f"{name}_{t}" if t else "" for t in m.textures]
+    for m in src.meshes:
+        spec.add_mesh(name=f"{name}_{m.name}", file=str(folder / m.file))
+    body = spec.worldbody.add_body(name=name)
+    body.add_freejoint()
+    friction = CATALOG[asset]["friction"]
+    for g in src.worldbody.find_all(mujoco.mjtObj.mjOBJ_GEOM):
+        collide = g.contype or g.conaffinity
+        body.add_geom(type=g.type, meshname=f"{name}_{g.meshname}", pos=offset, group=g.group,
+                      contype=g.contype, conaffinity=g.conaffinity, density=density if collide else 0,
+                      material=f"{name}_{g.material}" if g.material else "", condim=4,
+                      friction=[friction, 0.005, 0.0001])
+
+
+@lru_cache
+def measure(asset: str) -> tuple[np.ndarray, np.ndarray, float]:
+    """Collision bbox centre and size in the mesh frame (m), and the mass at density 1000.
+    Compiled once per asset in an empty scene."""
+    spec = mujoco.MjSpec()
+    _add_asset(spec, "a", asset, density=1000, offset=[0, 0, 0])
+    model = spec.compile()
+    data = mujoco.MjData(model)
+    mujoco.mj_forward(model, data)
+    pts = []
+    for g in range(model.ngeom):
+        if model.geom_contype[g] or model.geom_conaffinity[g]:
+            mesh = model.geom_dataid[g]
+            v = model.mesh_vert[model.mesh_vertadr[mesh]: model.mesh_vertadr[mesh] + model.mesh_vertnum[mesh]]
+            pts.append(v @ data.geom_xmat[g].reshape(3, 3).T + data.geom_xpos[g])
+    lo, hi = np.vstack(pts).min(0), np.vstack(pts).max(0)
+    return (lo + hi) / 2, hi - lo, float(model.body_mass[1])
 
 
 def free_speed(data: mujoco.MjData, name: str) -> float:

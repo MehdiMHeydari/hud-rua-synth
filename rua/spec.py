@@ -21,11 +21,12 @@ COLORS = {"red": [0.8, 0.1, 0.1, 1], "green": [0.1, 0.6, 0.2, 1], "blue": [0.1, 
 
 class Obj(BaseModel):
     name: str
-    shape: Literal[objects.PRIMITIVES + objects.COMPOUND + objects.ARTICULATED + objects.FIXED]
+    shape: Literal[objects.PRIMITIVES + objects.COMPOUND + objects.ARTICULATED + objects.FIXED + objects.ASSET]
     size: list[float]  # metres, full lengths. box/drawer/hole_block: [x, y, z]; cylinder: [diameter, height]; sphere/zone: [diameter]
-    # hook: [handle length, crossbar length, thickness]
-    color: Literal[tuple(COLORS)]
-    mass: float = 0.1
+    # hook: [handle length, crossbar length, thickness]; asset: filled from its catalog card (bbox), never set
+    color: Literal[tuple(COLORS)] | None = None  # required except for assets (textured)
+    mass: float = 0.1  # asset: defaults to its card's mass
+    asset: str | None = None  # asset only: a catalog id (assets/catalog.yaml)
     x: tuple[float, float]  # placement range on the table, sampled per seed
     y: tuple[float, float]
     yaw: tuple[float, float] = (0, 0)  # degrees
@@ -33,6 +34,21 @@ class Obj(BaseModel):
     damping: float = 2.0  # drawer only: resistance to sliding (N*s/m), a difficulty knob
     start: float = 0.0  # drawer only: how far open at reset, as a fraction of travel
     hole: float = 0.04  # hole_block only: side of the square hole (m); minus the peg width = clearance
+
+
+    @model_validator(mode="before")
+    @classmethod
+    def _asset_card(cls, v):
+        if v.get("shape") != "asset":
+            if v.get("color") is None:
+                raise ValueError(f"{v.get('name')}: color is required")
+            return v
+        if v.get("asset") not in objects.CATALOG:
+            raise ValueError(f"{v.get('name')}: unknown asset {v.get('asset')!r}; use an id from assets/catalog.yaml")
+        if "size" in v:
+            raise ValueError(f"{v.get('name')}: an asset's size comes from its catalog card; don't set it")
+        card = objects.CATALOG[v["asset"]]
+        return {"mass": card["mass"], **v, "size": card["size"]}
 
 
 class Lifted(BaseModel):
@@ -64,7 +80,8 @@ class Closed(BaseModel):
 
 class Inside(BaseModel):
     object: str
-    container: str  # a drawer: object centre within its tray and under the cabinet top, at rest
+    container: str  # a drawer: object centre within its tray and under the cabinet top, at rest;
+    # or a hollow asset: object centre within its rim (60% of the half-width) and bottom below the rim, at rest
 
 
 class Stacked(BaseModel):
@@ -102,7 +119,8 @@ class TaskSpec(BaseModel):
     name: str
     prompt: str
     objects: list[Obj] = Field(min_length=1)
-    success: dict[Literal[tuple(PREDICATES)], Union[tuple(PREDICATES.values())]]  # all must hold
+    # All must hold. A kind may take a list (e.g. two blocks `inside`), each entry checked.
+    success: dict[Literal[tuple(PREDICATES)], Union[tuple(PREDICATES.values())] | list[Union[tuple(PREDICATES.values())]]]
     oracle: list[Step] = Field(min_length=1)
     # Rotate the whole layout (positions and yaws) about its centre by a per-seed angle, degrees.
     # Per-object ranges alone keep relations (target always on the same side) fixed across seeds.
@@ -112,11 +130,19 @@ class TaskSpec(BaseModel):
     @field_validator("success", mode="before")
     @classmethod
     def _parse_by_kind(cls, v):  # the key picks the model; a plain union would guess from the fields
-        return {k: PREDICATES[k].model_validate(p) if k in PREDICATES else p for k, p in v.items()}
+        parse = lambda k, p: [parse(k, q) for q in p] if isinstance(p, list) else PREDICATES[k].model_validate(p)
+        return {k: parse(k, p) if k in PREDICATES else p for k, p in v.items()}
 
     @model_validator(mode="after")
     def _references_exist(self):
         by_name = {o.name: o for o in self.objects}
+        for o in self.objects:
+            if o.asset and not objects.CATALOG[o.asset]["admitted"]:
+                raise ValueError(f"asset {o.asset!r} failed admission: {objects.CATALOG[o.asset]['notes']}")
+        for p in self._predicates("inside"):
+            c = by_name.get(p.container)
+            if c and c.shape == "asset" and not objects.CATALOG[c.asset]["hollow"]:
+                raise ValueError(f"inside: asset {c.asset!r} is not a container (hollow: false)")
         # A closed cabinet's top looked like an open drawer to sol (2/5 drawer_store_close runs), so a
         # prompt must state the starting state of every movable part.
         if any(o.shape in objects.ARTICULATED for o in self.objects) and not any(
@@ -127,12 +153,16 @@ class TaskSpec(BaseModel):
             if obj not in by_name or s.toward not in (None, *by_name):
                 raise ValueError(f"oracle step references unknown object {obj!r} / {s.toward!r}")
             objects.part_offset(by_name[obj].shape, by_name[obj].size, part or None)  # raises if no such part
-        for p in self.success.values():
+        for p in (q for ps in self.success.values() for q in (ps if isinstance(ps, list) else [ps])):
             for field, ref in p:
                 for r in ([ref] if isinstance(ref, str) else ref) if field in REFS else ():
                     if r not in by_name:
                         raise ValueError(f"success references unknown object {r!r}")
         return self
+
+    def _predicates(self, kind: str) -> list:
+        p = self.success.get(kind, [])
+        return p if isinstance(p, list) else [p]
 
     def obj(self, name: str) -> Obj:
         return next(o for o in self.objects if o.name == name)
@@ -171,7 +201,8 @@ class TaskSpec(BaseModel):
     def conditions(self, sim) -> dict[str, bool]:
         """Each success predicate separately, so a 0 score says which part failed.
         sim gives body_pos(name), model, data, seed. Plain bools: numpy bools break HUD's JSON grading."""
-        return {kind: bool(self._holds(kind, p, sim)) for kind, p in self.success.items()}
+        return {kind: all(bool(self._holds(kind, q, sim)) for q in (p if isinstance(p, list) else [p]))
+                for kind, p in self.success.items()}
 
     def final_state(self, sim) -> dict:
         """Numbers behind the grade for trace review: object positions (mm), drawer open fraction,
@@ -207,7 +238,14 @@ class TaskSpec(BaseModel):
             local = block.xmat.reshape(3, 3).T @ (pos - block.xpos)  # object centre in the block's frame
             return max(abs(local[:2])) < t.hole / 2 and local[2] - o.size[-1] / 2 < t.size[2] - p.depth
         if kind == "inside":
-            return objects.in_drawer(sim.data, p.container, self.obj(p.container).size, pos) and self._released(sim, p.object)
+            c = self.obj(p.container)
+            if c.shape == "asset":
+                cpos = sim.body_pos(p.container)
+                within = (np.linalg.norm(pos[:2] - cpos[:2]) < 0.6 * min(c.size[:2]) / 2
+                          and pos[2] - o.size[-1] / 2 < cpos[2] + c.size[2] / 2)
+            else:
+                within = objects.in_drawer(sim.data, p.container, c.size, pos)
+            return within and self._released(sim, p.object)
         if kind == "near_offset":
             target = sim.body_pos(p.anchor)[:2] + p.offset
             return np.linalg.norm(pos[:2] - target) < p.radius and self._resting(sim, p.object)

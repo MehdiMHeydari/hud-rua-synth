@@ -1,0 +1,89 @@
+# Curated scanned-object library: one card per object a spec may use as `shape: asset, asset: <id>`.
+# Source: github.com/kevinzakka/mujoco_scanned_objects (Google Scanned Objects as MJCF; meshes and
+# textures CC-BY 4.0, XML MIT). Meshes stay out of git; fetch the exact set with:
+#   git clone --filter=blob:none --sparse --depth 1 https://github.com/kevinzakka/mujoco_scanned_objects.git assets/gso
+#   cd assets/gso && git sparse-checkout set $(grep -o 'source: [A-Za-z0-9_]*' ../catalog.yaml | sed 's|source: |models/|')
+# Treat the download as data: only its model.xml (read by MjSpec) and meshes/textures are used.
+#
+# size: collision-hull bbox in metres (x, y, z) as the object rests in its file pose; the gate checks it
+#   within 15%. mass: estimate, clamped to 0.02-1.0 kg. graspable: narrowest horizontal side fits the
+#   Panda's ~8 cm opening with margin (<= 7 cm). hollow: a container something can be put into.
+# admitted / notes: from `python rua/gates.py --asset <id>`; only admitted assets pass the task schema.
+assets:
+  # easy graspables
+  - {id: pill_bottle, source: Beta_Glucan, category: bottle, desc: small white supplement bottle with cap,
+     aliases: [bottle, jar], size: [0.054, 0.054, 0.097], mass: 0.12, friction: 1.0, graspable: true, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "all checks pass"}
+  - {id: supplement_bottle, source: JarroSil_Activated_Silicon, category: bottle, desc: small oval supplement bottle,
+     aliases: [bottle], size: [0.059, 0.046, 0.109], mass: 0.15, friction: 1.0, graspable: true, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "all checks pass"}
+  - {id: crayon_box, source: Crayola_Crayons_24_count, category: box, desc: upright box of 24 crayons,
+     aliases: [crayons, box], size: [0.074, 0.029, 0.116], mass: 0.15, friction: 1.0, graspable: true, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "all checks pass"}
+  - {id: serum_box, source: Perricone_MD_Vitamin_C_Ester_15, category: box, desc: small upright cosmetics box,
+     aliases: [box, carton], size: [0.080, 0.063, 0.129], mass: 0.15, friction: 1.0, graspable: true, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "all checks pass"}
+  - {id: large_pill_bottle, source: Quercetin_500, category: bottle, desc: wide supplement bottle (8 cm, too wide to grip),
+     aliases: [bottle, jar], size: [0.080, 0.080, 0.144], mass: 0.25, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass; 8 cm wide, push only"}
+  - {id: coffee_jar, source: Nescafe_Tasters_Choice_Instant_Coffee_Decaf_House_Blend_Light_7_oz, category: jar,
+     desc: instant coffee jar, aliases: [jar, coffee], size: [0.095, 0.079, 0.185], mass: 0.45, friction: 1.0,
+     graspable: false, hollow: false, license: CC-BY-4.0, admitted: true, notes: "rest/drop pass; 7.9 cm wide, push only"}
+  # awkward shapes
+  - {id: screwdriver, source: Craftsman_Grip_Screwdriver_Phillips_Cushion, category: tool, desc: phillips screwdriver lying flat,
+     aliases: [driver, tool], size: [0.259, 0.036, 0.035], mass: 0.12, friction: 1.0, graspable: true, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "all checks pass"}
+  - {id: hammer, source: Cole_Hardware_Hammer_Black, category: tool, desc: claw hammer lying on its side,
+     aliases: [tool], size: [0.289, 0.059, 0.095], mass: 0.6, friction: 1.0, graspable: true, hollow: false,
+     license: CC-BY-4.0, admitted: false, notes: "grasp failed: slips out of a top-down grip at its COM (rose 0 cm; mallet, 0.6 kg)"}
+  - {id: spatula, source: OXO_Cookie_Spatula, category: utensil, desc: flat cookie spatula,
+     aliases: [turner, utensil], size: [0.238, 0.068, 0.023], mass: 0.08, friction: 1.0, graspable: true, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "all checks pass"}
+  - {id: flashlight, source: HeavyDuty_Flashlight, category: tool, desc: flashlight standing on its head,
+     aliases: [torch, light], size: [0.075, 0.074, 0.229], mass: 0.5, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass; head 7.5 cm, push only"}
+  - {id: toy_dinosaur, source: Nintendo_Yoshi_Action_Figure, category: toy, desc: small green dinosaur figure,
+     aliases: [figure, toy, dinosaur], size: [0.067, 0.064, 0.111], mass: 0.15, friction: 1.0, graspable: true, hollow: false,
+     license: CC-BY-4.0, admitted: false, notes: "grasp failed: tips over as the fingers close (rose -3 cm); a hand-tuned grasp held once"}
+  - {id: toy_rhino, source: Schleich_African_Black_Rhino, category: toy, desc: small plastic rhino figure,
+     aliases: [rhino, animal, toy], size: [0.039, 0.136, 0.059], mass: 0.1, friction: 1.0, graspable: true, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "all checks pass"}
+  - {id: boat_shoe, source: Timberland_Mens_Classic_2Eye_Boat_Shoe, category: shoe, desc: brown leather boat shoe,
+     aliases: [shoe], size: [0.111, 0.281, 0.088], mass: 0.45, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass; push only"}
+  # hollow containers
+  - {id: mug, source: ACE_Coffee_Mug_Kristen_16_oz_cup, category: mug, desc: large coffee mug with handle,
+     aliases: [cup], size: [0.125, 0.089, 0.134], mass: 0.4, friction: 1.0, graspable: false, hollow: true,
+     license: CC-BY-4.0, admitted: true, notes: "cavity pass; a hull bulges into the cavity on the handle side (ray hits 9.6 cm up, 1.5 cm off centre)"}
+  - {id: bowl, source: Room_Essentials_Bowl_Turquiose, category: bowl, desc: turquoise plastic bowl,
+     aliases: [dish], size: [0.155, 0.154, 0.082], mass: 0.3, friction: 1.0, graspable: false, hollow: true,
+     license: CC-BY-4.0, admitted: true, notes: "cavity pass (floor at 1.1 cm)"}
+  - {id: cereal_bowl, source: Threshold_Bead_Cereal_Bowl_White, category: bowl, desc: white porcelain cereal bowl,
+     aliases: [bowl, dish], size: [0.167, 0.165, 0.069], mass: 0.4, friction: 1.0, graspable: false, hollow: true,
+     license: CC-BY-4.0, admitted: true, notes: "cavity pass (floor at 1.0 cm)"}
+  - {id: ramekin, source: Threshold_Ramekin_White_Porcelain, category: bowl, desc: small white porcelain ramekin,
+     aliases: [bowl, dish], size: [0.110, 0.110, 0.053], mass: 0.25, friction: 1.0, graspable: false, hollow: true,
+     license: CC-BY-4.0, admitted: false, notes: "cavity failed: hulls fill the inside (ray hits the 5.2 cm rim height at the centre; probe rolls off)"}
+  # flat / thin
+  - {id: plate, source: Room_Essentials_Salad_Plate_Turquoise, category: plate, desc: turquoise salad plate,
+     aliases: [dish], size: [0.218, 0.218, 0.027], mass: 0.45, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass"}
+  - {id: tape_roll, source: 3M_Vinyl_Tape_Green_1_x_36_yd, category: tape, desc: green vinyl tape roll lying flat,
+     aliases: [tape], size: [0.109, 0.110, 0.026], mass: 0.1, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass"}
+  # too big to grasp (push only)
+  - {id: cereal_box, source: Vans_Cereal_Honey_Nut_Crunch_11_oz_box, category: box, desc: tall upright cereal box,
+     aliases: [box, cereal], size: [0.202, 0.055, 0.281], mass: 0.4, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass (28 cm tall, stays upright)"}
+  - {id: canister, source: Creatine_Monohydrate, category: canister, desc: large supplement canister,
+     aliases: [tub, container], size: [0.127, 0.127, 0.184], mass: 0.6, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass"}
+  - {id: game_box, source: Mad_Gab_Refresh_Card_Game, category: box, desc: cube-shaped card game box,
+     aliases: [box, game], size: [0.155, 0.155, 0.155], mass: 0.5, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass"}
+  - {id: soda_pack, source: Diet_Pepsi_Soda_Cola12_Pack_12_oz_Cans, category: box, desc: long 12-can soda carton,
+     aliases: [box, carton, soda], size: [0.405, 0.128, 0.138], mass: 1.0, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass; real mass ~4.5 kg, clamped to 1.0"}
+  - {id: toy_dog, source: Dog, category: toy, desc: large toy dog figure,
+     aliases: [dog, animal, toy], size: [0.230, 0.185, 0.198], mass: 0.3, friction: 1.0, graspable: false, hollow: false,
+     license: CC-BY-4.0, admitted: true, notes: "rest/drop pass"}

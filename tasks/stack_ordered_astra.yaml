@@ -1,0 +1,38 @@
+name: stack_ordered_astra
+prompt: Stack the four cubes into one tower with the blue cube at the bottom, then the red cube, then the green cube, and the yellow cube on top. Leave the tower standing on its own.
+# Astra variant of stack_ordered (Astra 3/5 with three cubes): a fourth cube, so one more
+# pick-and-place onto a taller, less forgiving tower (18 cm).
+objects:
+  - {name: blue, shape: box, size: [0.045, 0.045, 0.045], color: blue, x: [0.45, 0.55], y: [-0.05, 0.05], yaw: [-45, 45]}
+  - {name: red, shape: box, size: [0.045, 0.045, 0.045], color: red, x: [0.35, 0.45], y: [0.15, 0.25], yaw: [-45, 45]}
+  - {name: green, shape: box, size: [0.045, 0.045, 0.045], color: green, x: [0.6, 0.7], y: [-0.25, -0.15], yaw: [-45, 45]}
+  - {name: yellow, shape: box, size: [0.045, 0.045, 0.045], color: yellow, x: [0.6, 0.7], y: [0.15, 0.25], yaw: [-45, 45]}
+success:
+  stacked: {order: [blue, red, green, yellow]}
+# As stack_ordered: each cube set down 5 mm above the one below, turned to the bottom cube's yaw.
+oracle:
+  - {at: red, offset: [0, 0, 0.15], gripper: open}
+  - {at: red, gripper: open}
+  - {at: red, gripper: closed}
+  - {at: red, offset: [0, 0, 0.15], gripper: closed}
+  - {at: blue, offset: [0, 0, 0.15], gripper: closed}
+  - {at: blue, offset: [0, 0, 0.05], gripper: closed}
+  - {at: blue, offset: [0, 0, 0.05], gripper: open}
+  - {at: blue, offset: [0, 0, 0.15], gripper: open}
+  - {at: green, offset: [0, 0, 0.15], gripper: open}
+  - {at: green, gripper: open}
+  - {at: green, gripper: closed}
+  - {at: green, offset: [0, 0, 0.20], gripper: closed}
+  - {at: blue, offset: [0, 0, 0.20], gripper: closed}
+  - {at: blue, offset: [0, 0, 0.095], gripper: closed}
+  - {at: blue, offset: [0, 0, 0.095], gripper: open}
+  - {at: blue, offset: [0, 0, 0.20], gripper: open}
+  - {at: yellow, offset: [0, 0, 0.15], gripper: open}
+  - {at: yellow, gripper: open}
+  - {at: yellow, gripper: closed}
+  - {at: yellow, offset: [0, 0, 0.25], gripper: closed}
+  - {at: blue, offset: [0, 0, 0.25], gripper: closed}
+  - {at: blue, offset: [0, 0, 0.14], gripper: closed}
+  - {at: blue, offset: [0, 0, 0.14], gripper: open}
+  - {at: blue, offset: [0, 0, 0.25], gripper: open}
+knobs: {blocks: 4, block_size: 0.045}

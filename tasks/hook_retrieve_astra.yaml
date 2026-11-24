@@ -1,0 +1,21 @@
+name: hook_retrieve_astra
+prompt: The red cube is out of the arm's reach. Bring it into the green circle so it lies entirely inside it.
+objects:
+  - {name: cube, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.98, 1.01], y: [-0.12, 0.12]}
+  - {name: hook, shape: hook, size: [0.34, 0.12, 0.04], color: blue, mass: 0.05, x: [0.48, 0.53], y: [-0.32, -0.27]}
+  - {name: goal, shape: zone, size: [0.11], color: green, x: [0.62, 0.68], y: [-0.02, 0.02]}
+success:
+  in_zone: {object: cube, zone: goal, radius: 0.03}
+# Grip the handle 5 cm from its end (33 cm short of the crossbar), lower the crossbar 1 cm behind
+# the cube with the handle 6 cm to its side, pull back toward the circle, let go.
+oracle:
+  - {at: hook.handle, offset: [0, 0, 0.15], gripper: open}
+  - {at: hook.handle, gripper: open}
+  - {at: hook.handle, gripper: closed}
+  - {at: hook.handle, offset: [0, 0, 0.15], gripper: closed}
+  - {at: cube, offset: [-0.215, -0.06, 0.15], gripper: closed}
+  - {at: cube, offset: [-0.215, -0.06, 0.025], gripper: closed}
+  - {at: goal, offset: [-0.235, -0.06, 0.025], gripper: closed}
+  - {at: goal, offset: [-0.235, -0.06, 0.025], gripper: open}
+  - {at: goal, offset: [-0.235, -0.06, 0.15], gripper: open}
+knobs: {cube_x_min: 0.98, cube_y_spread: 0.12, hook_length: 0.34, goal_radius: 0.03}
