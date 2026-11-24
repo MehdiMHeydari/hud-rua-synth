@@ -57,8 +57,11 @@ async def main() -> None:
         print(f"reward={run.reward} trace={run.trace_id}")
     print(f"job={job.id}")
     k, n = sum((r.reward or 0) >= 1 for r in job.runs), len(job.runs)
+    errors = sum(bool(r.trace.is_error) for r in job.runs)  # crashed rollouts are not model failures
     lo, hi = wilson(k, n)
     verdict = "too easy" if lo > 0.30 else "too hard" if hi < 0.05 else "in band" if 0.05 <= k / n <= 0.30 else "unclear"
+    if errors:
+        verdict = f"INVALID: {errors}/{n} rollouts errored (harness/spec bug, not model failures)"
     cost = n * COST_PER_EPISODE.get(MODEL, 0.0)
     print(f"{TASK}: {k}/{n} = {k / n:.0%} (90% CI {lo:.0%}-{hi:.0%}) -> {verdict}; est cost ${cost:.2f}")
     log = Path(__file__).parents[1] / "runs" / "log.jsonl"
@@ -66,7 +69,7 @@ async def main() -> None:
     with log.open("a") as f:
         f.write(json.dumps({"time": time.strftime("%Y-%m-%d %H:%M"), "task": TASK, "model": MODEL, "steps": STEPS,
                             "effort": EFFORT, "cameras": os.environ.get("CAMERAS", "top,wrist"), "seed0": SEED0,
-                            "k": k, "n": n, "job": job.id, "est_cost": round(cost, 3)}) + "\n")
+                            "k": k, "n": n, "errors": errors, "job": job.id, "est_cost": round(cost, 3)}) + "\n")
 
 
 # Rough $/episode at 40 steps, from hud.ai trace pages; exact cost is on each trace.
