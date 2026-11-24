@@ -1,0 +1,20 @@
+# private context, never commit
+CLAUDE.md
+.claude/
+notes/
+
+# secrets
+.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# outputs
+runs/
+*.mp4
+
+# raw research notes (long, agent-written); reports/ holds the synthesized versions
+research_notes/

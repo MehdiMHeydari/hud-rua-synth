@@ -1,0 +1,14 @@
+name: open_drawer
+prompt: The drawer starts closed. Open it by pulling its handle until the drawer is fully out.
+objects:
+  - {name: cabinet, shape: drawer, size: [0.25, 0.30, 0.14], color: wood, mass: 0.5,
+     x: [0.62, 0.68], y: [-0.1, 0.1], yaw: [-15, 15], travel: 0.18, damping: 2.0}
+success:
+  opened: {object: cabinet, fraction: 0.9}
+oracle:
+  - {at: cabinet.handle, offset: [0, 0, 0.10], gripper: open}
+  - {at: cabinet.handle, gripper: open}
+  - {at: cabinet.handle, gripper: closed}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: closed}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: open}
+knobs: {damping: 2.0}

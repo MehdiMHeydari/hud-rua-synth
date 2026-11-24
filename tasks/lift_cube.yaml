@@ -1,0 +1,11 @@
+name: lift_cube
+prompt: Pick up the red cube and hold it at least 10 cm above the table.
+objects:
+  - {name: cube, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.4, 0.6], y: [-0.15, 0.15]}
+success:
+  lifted: {object: cube, height: 0.10}
+oracle:
+  - {at: cube, offset: [0, 0, 0.15], gripper: open}
+  - {at: cube, gripper: open}
+  - {at: cube, gripper: closed}
+  - {at: cube, offset: [0, 0, 0.20], gripper: closed}

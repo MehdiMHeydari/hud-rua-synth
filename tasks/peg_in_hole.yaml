@@ -1,0 +1,20 @@
+name: peg_in_hole
+prompt: Pick up the red peg and put it into the hole in the white block.
+objects:
+  - {name: peg, shape: box, size: [0.03, 0.03, 0.06], color: red, x: [0.38, 0.48], y: [-0.2, -0.1]}
+  - {name: holder, shape: hole_block, size: [0.12, 0.12, 0.04], hole: 0.037, color: white,
+     x: [0.5, 0.6], y: [0.05, 0.18], yaw: [-20, 20]}
+success:
+  inserted: {object: peg, target: holder, depth: 0.02}
+# Pads level with the peg's centre (tcp 5 mm above it) so it can't pivot in the grip; a taller
+# peg grasped at its centre hit the palm. Lower 1 cm into the hole, then let go: it drops to the table.
+oracle:
+  - {at: peg, offset: [0, 0, 0.15], gripper: open}
+  - {at: peg, offset: [0, 0, 0.005], gripper: open}
+  - {at: peg, offset: [0, 0, 0.005], gripper: closed}
+  - {at: peg, offset: [0, 0, 0.15], gripper: closed}
+  - {at: holder, offset: [0, 0, 0.15], gripper: closed}
+  - {at: holder, offset: [0, 0, 0.065], gripper: closed}
+  - {at: holder, offset: [0, 0, 0.065], gripper: open}
+  - {at: holder, offset: [0, 0, 0.15], gripper: open}
+knobs: {clearance_mm: 7}

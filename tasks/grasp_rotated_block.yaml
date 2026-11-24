@@ -1,0 +1,13 @@
+name: grasp_rotated_block
+prompt: Pick up the blue bar and hold it at least 10 cm above the table.
+objects:
+  - {name: bar, shape: box, size: [0.16, 0.07, 0.04], color: blue, x: [0.4, 0.6], y: [-0.15, 0.15], yaw: [0, 180]}
+success:
+  lifted: {object: bar, height: 0.10}
+oracle:
+  - {at: bar, offset: [0, 0, 0.15], gripper: open}
+  - {at: bar, gripper: open}
+  - {at: bar, gripper: closed}
+  - {at: bar, offset: [0, 0, 0.20], gripper: closed}
+# v3 (sol 5/5 on v1 12x3 cm yaw 30-90, and v2 16x5.5 cm any yaw): 7 cm bar leaves 1 cm spare.
+knobs: {width: 0.07, length: 0.16, yaw_range_deg: 180}

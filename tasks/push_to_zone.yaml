@@ -1,0 +1,17 @@
+name: push_to_zone
+prompt: The yellow puck is too wide to grasp. Push it along the table until it lies entirely inside the green circle.
+objects:
+  - {name: puck, shape: cylinder, size: [0.10, 0.03], color: yellow, mass: 0.2, x: [0.42, 0.48], y: [-0.05, 0.05]}
+  - {name: goal, shape: zone, size: [0.13], color: green, x: [0.58, 0.66], y: [-0.18, 0.18]}
+success:
+  in_zone: {object: puck, zone: goal, radius: 0.015}
+# Push with the open fingers either side of the puck's centreline: a two-point push keeps the
+# puck on the line, where a single closed-finger contact let it slide off sideways (up to 5 cm).
+oracle:
+  - {at: puck, toward: goal, offset: [-0.08, 0, 0.10], gripper: open}
+  - {at: puck, toward: goal, offset: [-0.08, 0, 0.01], gripper: open}
+  - {at: goal, toward: puck, offset: [0.04, 0, 0.025], yaw: 180, gripper: open}
+  - {at: goal, toward: puck, offset: [0.10, 0, 0.12], yaw: 180, gripper: open}
+# v4 (sol 5/5 v1 20 cm zone ahead; 3/5 v2 14 cm diagonal; v3 1 cm was unsolvable by the oracle
+# through the real tool, whose moves stop within ~1 cm): 13 cm zone, within 1.5 cm of centre.
+knobs: {radius: 0.015, zone_diameter: 0.13}
