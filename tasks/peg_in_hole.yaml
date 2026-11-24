@@ -2,7 +2,7 @@ name: peg_in_hole
 prompt: Pick up the red peg and put it into the hole in the white block.
 objects:
   - {name: peg, shape: box, size: [0.03, 0.03, 0.06], color: red, x: [0.38, 0.48], y: [-0.2, -0.1], yaw: [20, 70]}
-  - {name: holder, shape: hole_block, size: [0.12, 0.12, 0.04], hole: 0.043, color: white,
+  - {name: holder, shape: hole_block, size: [0.12, 0.12, 0.04], hole: 0.0415, color: white,
      x: [0.5, 0.6], y: [0.05, 0.18], yaw: [-20, 20]}
 success:
   inserted: {object: peg, target: holder, depth: 0.02}
@@ -18,5 +18,5 @@ oracle:
   - {at: holder, offset: [0, 0, 0.065], gripper: open}
   - {at: holder, offset: [0, 0, 0.15], gripper: open}
 # v3: sol 1/15 at 7 mm clearance was a harness precision cliff (oracle fails at 5 mm error); 8/10 at
-# 15 mm, 0/10 at 11 mm + rotation (cliff). Now 13 mm (passes the 5 mm robust gate) and the square peg starts rotated 20-70 deg from the hole.
-knobs: {clearance_mm: 13, peg_yaw_min_deg: 20, peg_yaw_max_deg: 70}
+# 15 mm, 0/10 at 11 mm + rotation (cliff), 8/20 at 13 mm, 7/20 at 12 mm. Now 11.5 mm (passes the 5 mm robust gate) and the square peg starts rotated 20-70 deg from the hole.
+knobs: {clearance_mm: 11.5, peg_yaw_min_deg: 20, peg_yaw_max_deg: 70}
