@@ -63,6 +63,20 @@ def gate_reach(sim: Sim, seed: int) -> str | None:
     return None
 
 
+def gate_robust(sim: Sim, seed: int, error: float = 0.005) -> str | None:
+    """The oracle still succeeds with its placements 5 mm off (the tool only stops within ~1 cm, and
+    agents localise worse). Caught peg_in_hole at 7 mm clearance: 8/16 at 5 mm off, so sol's 0/10
+    measured the harness, not the model. Shifts the second half of the plan in 4 directions; 3/4 must pass."""
+    plan, passed = sim.task.plan(seed), 0
+    for k in range(4):
+        sim.reset(seed)
+        shift = error * np.array([np.cos(k * np.pi / 2 + 0.4), np.sin(k * np.pi / 2 + 0.4), 0])
+        for i, (pos, yaw, gripper) in enumerate(plan):
+            sim.move_to(pos + (shift if i >= len(plan) // 2 else 0), yaw=yaw, gripper=gripper)
+        passed += sim.success()
+    return None if passed >= 3 else f"oracle fails with 5 mm placement error ({passed}/4): precision tighter than the tool allows"
+
+
 def gate_trivial(sim: Sim, seed: int, rng: np.random.Generator) -> str | None:
     """Gate 3: not already solved, and doing nothing or acting randomly doesn't solve it."""
     if sim.success():
@@ -98,7 +112,8 @@ def run_gates(name: str, seeds: int) -> list[tuple[str, int, str]]:
                          ("joints", lambda: gate_joints(sim, seed)),
                          ("reach", lambda: gate_reach(sim, seed)),
                          ("trivial", lambda: gate_trivial(sim, seed, rng)),
-                         ("oracle", lambda: gate_oracle(sim, seed))):
+                         ("oracle", lambda: gate_oracle(sim, seed)),
+                         ("robust", lambda: gate_robust(sim, seed))):
             sim.reset(seed)
             if reason := fn():
                 failures.append((gate, seed, reason))
@@ -110,5 +125,5 @@ if __name__ == "__main__":
     failures = run_gates(name, seeds)
     for gate, seed, reason in failures:
         print(f"FAIL {gate} seed={seed}: {reason}")
-    print(f"{name}: {'PASS' if not failures else 'FAIL'} ({seeds} seeds, gates: schema, settle, joints, reach, trivial, oracle)")
+    print(f"{name}: {'PASS' if not failures else 'FAIL'} ({seeds} seeds, gates: schema, settle, joints, reach, trivial, oracle, robust)")
     sys.exit(1 if failures else 0)
