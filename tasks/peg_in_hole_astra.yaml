@@ -33,4 +33,5 @@ oracle:
   - {at: holder, offset: [0, 0, 0.065], gripper: closed}
   - {at: holder, offset: [0, 0, 0.065], gripper: open}
   - {at: holder, offset: [0, 0, 0.15], gripper: open}
+hidden: {inserted.depth: "A released peg drops to the table inside the 4 cm block, so 2 cm only rejects a peg jammed on the rim, which 'into the hole' already excludes."}
 knobs: {clearance_mm: 11.5, hole_occupied: 1, layout_yaw_deg: 30}

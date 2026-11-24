@@ -1,0 +1,63 @@
+name: drawer_tower_close
+prompt: The drawer starts open. Build a three-block tower on the white circle beside the cabinet. Put the red block on the bottom, with its centre within 3 cm of the circle's centre. Put the green block in the middle and the blue block on top, each resting centred on the block below. When you are done, the tower must be standing and the drawer must be fully closed.
+# Two sub-goals that interact: the open drawer must end fully closed, and a free-standing tower must
+# be built beside the cabinet without being knocked over. The oracle closes first, then stacks. The
+# grader only checks the final state, so either order works if the tower survives.
+# v2: the drawer started half open (start 0.5). Closing the fingers on the handle slid the free drawer
+# ~2.8 cm, so the grip landed off the handle centre. The drawer then hit its stop before the tool
+# reached the closed handle position (oracle step 3 stopped 2.8 cm short). The drawer now starts fully
+# open, against its outer stop, so the grip can't slide it outward; this is the same re-grip and push
+# that drawer_store_close uses.
+# The zone sits on the cabinet's -y side, behind its front face, so it is out of the drawer's path.
+# Cabinet centre y >= 0.18, half-width 0.15, yaw +-15 deg, so the cabinet's lowest y is about 0.003.
+# The zone centre y is at most -0.07, so a block within 3 cm of it has its edge at y <= -0.005.
+# The oracle plan uses sampled poses, so the tower is built at `zone` offsets, not at red's spawn
+# position: 5 cm blocks, centres at 0.03 / 0.08 / 0.13 (+5 mm drop each).
+# Blocks are spaced 8+ cm apart along x, because tool yaw 0 spreads the fingers along y.
+objects:
+  - {name: cabinet, shape: drawer, size: [0.25, 0.30, 0.14], color: wood, mass: 0.5,
+     x: [0.62, 0.68], y: [0.18, 0.24], yaw: [-15, 15], travel: 0.18, damping: 2.0, start: 1.0}
+  - {name: zone, shape: zone, size: [0.11], color: white, x: [0.60, 0.66], y: [-0.10, -0.07]}
+  - {name: red, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.36, 0.40], y: [-0.30, -0.25]}
+  - {name: green, shape: box, size: [0.05, 0.05, 0.05], color: green, x: [0.48, 0.52], y: [-0.30, -0.25]}
+  - {name: blue, shape: box, size: [0.05, 0.05, 0.05], color: blue, x: [0.60, 0.64], y: [-0.30, -0.25]}
+success:
+  stacked: {order: [red, green, blue]}
+  in_zone: {object: red, zone: zone, radius: 0.03}
+  closed: {object: cabinet, fraction: 0.05}
+oracle:
+  # close the drawer: the handle starts 1.0 * 0.18 = 18 cm out; grip it, slide it home, release
+  - {at: cabinet.handle, offset: [-0.18, 0, 0.10], gripper: open}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: open}
+  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: closed}
+  - {at: cabinet.handle, gripper: closed}
+  - {at: cabinet.handle, gripper: open}
+  - {at: cabinet.handle, offset: [0, 0, 0.10], gripper: open}
+  # red onto the circle
+  - {at: red, offset: [0, 0, 0.15], gripper: open}
+  - {at: red, gripper: open}
+  - {at: red, gripper: closed}
+  - {at: red, offset: [0, 0, 0.15], gripper: closed}
+  - {at: zone, offset: [0, 0, 0.15], gripper: closed}
+  - {at: zone, offset: [0, 0, 0.03], gripper: closed}
+  - {at: zone, offset: [0, 0, 0.03], gripper: open}
+  - {at: zone, offset: [0, 0, 0.20], gripper: open}
+  # green onto red
+  - {at: green, offset: [0, 0, 0.15], gripper: open}
+  - {at: green, gripper: open}
+  - {at: green, gripper: closed}
+  - {at: green, offset: [0, 0, 0.20], gripper: closed}
+  - {at: zone, offset: [0, 0, 0.20], gripper: closed}
+  - {at: zone, offset: [0, 0, 0.08], gripper: closed}
+  - {at: zone, offset: [0, 0, 0.08], gripper: open}
+  - {at: zone, offset: [0, 0, 0.25], gripper: open}
+  # blue onto green
+  - {at: blue, offset: [0, 0, 0.15], gripper: open}
+  - {at: blue, gripper: open}
+  - {at: blue, gripper: closed}
+  - {at: blue, offset: [0, 0, 0.25], gripper: closed}
+  - {at: zone, offset: [0, 0, 0.25], gripper: closed}
+  - {at: zone, offset: [0, 0, 0.13], gripper: closed}
+  - {at: zone, offset: [0, 0, 0.13], gripper: open}
+  - {at: zone, offset: [0, 0, 0.30], gripper: open}
+knobs: {tower_height: 3, drawer_start: 1.0, damping: 2.0, zone_radius: 0.03}

@@ -2,13 +2,15 @@
 
     python rua/gates.py lift_cube            # 5 seeds
     SEEDS=10 python rua/gates.py lift_cube
-    python rua/gates.py --asset mug          # library admission checks for one catalog asset
+    python rua/gates.py --asset mug          # library admission checks for one catalog asset (+ a vision
+                                             # check on gpt-6-luna, ~$0.002; --no-vision skips it)
 
 Each failure prints a reason the generator can act on. Exit code 1 if any gate fails.
 The harness-level truth test (rua/checks.py) is gate 4 and runs once per harness change.
 """
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -115,13 +117,64 @@ def gate_oracle(sim: Sim, seed: int) -> str | None:
         err = sim.move_to(pos, yaw=yaw, gripper=gripper)
         if err > 0.02:
             return f"oracle step {i} stopped {err * 100:.1f} cm short (unreachable?)"
-    return None if sim.success() else "oracle plan finished but the success check is false"
+    if sim.success():
+        return None
+    # Which predicate failed and where things ended: "success is false" alone left the generator
+    # guessing for 4 rounds (bottle_in_mug_push).
+    failed = [k for k, ok in sim.task.conditions(sim).items() if not ok]
+    return f"oracle plan finished but {failed} is false; final state {sim.task.final_state(sim)}"
+
+
+# Phrases accepted instead of a number, and the thresholds they stand for.
+FULLY_OPEN = r"(fully|completely|all the way) (open|out)|open (it )?(fully|completely|all the way)"
+FULLY_CLOSED = r"(fully|completely|all the way) (closed|shut)|close (it )?(fully|completely|all the way)"
+ALL_THE_WAY_IN = r"all the way (in|down)|fully (in|insert)"
+ENTIRELY_INSIDE = r"(entirely|fully|completely) (inside|within|in)"
+
+
+def thresholds(task: spec.TaskSpec, kind: str, p) -> list[tuple[str, float, str | None]]:
+    """(field, value, accepted phrase) for each numeric threshold a predicate grades on. Not listed:
+    `unmoved` ("leave it where it is" is stricter than its tol), `stacked`/`inside` (geometric)."""
+    if kind == "lifted":
+        return [("height", p.height, None)]
+    if kind == "opened":
+        return [("fraction", p.fraction, FULLY_OPEN if p.fraction >= 0.9 else None)]
+    if kind == "closed":
+        return [("fraction", p.fraction, FULLY_CLOSED if p.fraction <= 0.05 else None)]
+    if kind == "inserted":
+        return [("depth", p.depth, ALL_THE_WAY_IN)]
+    if kind == "in_zone":  # "entirely inside" only if the drawn circle is exactly radius + object radius
+        fits = abs(task.obj(p.zone).size[0] / 2 - task.obj(p.object).size[0] / 2 - p.radius) < 0.005
+        return [("radius", p.radius, ENTIRELY_INSIDE if fits else None)]
+    if kind == "near_offset":
+        return [("offset", abs(v), None) for v in p.offset if v] + [("radius", p.radius, None)]
+    return []
+
+
+def gate_prompt(task: spec.TaskSpec) -> str | None:
+    """Every numeric success threshold is stated in the prompt (cm/mm/%, or a phrase that means it),
+    unless listed under `hidden:` with a reason. OpenRUA: 79/413 failures came from unstated thresholds."""
+    text = task.prompt.lower()
+    said = [(float(v) * {"cm": 0.01, "mm": 0.001, "%": 0.01}[u], u == "%")
+            for v, u in re.findall(r"(\d+(?:\.\d+)?)\s*(cm|mm|%)", text)]
+    missing = []
+    for kind, ps in task.success.items():
+        for p in ps if isinstance(ps, list) else [ps]:
+            for field, value, phrase in thresholds(task, kind, p):
+                frac = field == "fraction"
+                if (f"{kind}.{field}" in task.hidden or (phrase and re.search(phrase, text))
+                        or any(f == frac and abs(n - value) < (0.01 if frac else 0.0015) for n, f in said)):
+                    continue
+                missing.append(f"{kind}.{field} = {value * 100:g}{'%' if frac else ' cm'}")
+    return None if not missing else (f"prompt doesn't state {', '.join(dict.fromkeys(missing))}: state it (cm/mm/%, or a phrase "
+                                     "like 'fully closed' / 'entirely inside the circle') or list it under hidden: with a reason")
 
 
 def run_gates(name: str, seeds: int) -> list[tuple[str, int, str]]:
     """Gate 1 (schema) is spec.load raising. Returns (gate, seed, reason) failures."""
     task = spec.load(name)
-    sim, rng, failures = Sim(task), np.random.default_rng(0), []
+    sim, rng = Sim(task), np.random.default_rng(0)
+    failures = [("prompt", -1, reason)] if (reason := gate_prompt(task)) else []  # seed-independent
     for seed in range(seeds):
         for gate, fn in (("settle", lambda: gate_settle(sim, seed)),
                          ("joints", lambda: gate_joints(sim, seed)),
@@ -167,6 +220,10 @@ def asset_checks(asset: str, render_dir: Path) -> list[tuple[str, str | None]]:
                 f"drifted {drift * 100:.1f} cm, tilt {tilt():.0f} deg, overlap {overlap() * 1000:.0f} mm"))
     for c in ("top", "shoulder"):  # (g) for a human glance
         Image.fromarray(sim._render(c)).save(render_dir / f"{asset}_{c}.png")
+    cam = mujoco.MjvCamera()  # close-up for the vision check: the fixed cameras show it at ~40 px
+    cam.lookat[:], cam.distance, cam.elevation, cam.azimuth = spawn, 2.5 * max(card_size) + 0.1, -35, 160
+    sim.renderer.update_scene(sim.data, camera=cam)
+    Image.fromarray(sim.renderer.render()).save(render_dir / f"{asset}_close.png")
     sim.reset(0)  # (d) 5 cm drop
     adr = sim.model.jnt_qposadr[sim.model.body("obj").jntadr[0]]
     sim.data.qpos[adr + 2] += 0.05
@@ -202,11 +259,41 @@ def asset_checks(asset: str, render_dir: Path) -> list[tuple[str, str | None]]:
     return out
 
 
+def vision_check(asset: str, image: Path, model: str = "gpt-6-luna") -> str:
+    """Asset matches its card: a cheap vision model sees the close-up render and answers "yes: ..." or
+    "no: ...". Catches a wrong source folder or a mesh that loaded as a blob, which size/physics checks pass."""
+    import asyncio, base64
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parents[1] / ".env")
+    from hud.utils.gateway import build_gateway_client
+    card = objects.CATALOG[asset]
+    q = (f"Is the object on the table a {card['category']} ({card['desc']})? Ignore the robot arm. "
+         "Reply on one line: 'yes: <what it looks like, under 12 words>' or 'no: <what it looks like>'.")
+    img = base64.b64encode(image.read_bytes()).decode()
+    r = asyncio.run(build_gateway_client("openai").responses.create(model=model, input=[{"role": "user", "content": [
+        {"type": "input_text", "text": q}, {"type": "input_image", "image_url": f"data:image/png;base64,{img}"}]}]))
+    return " ".join(r.output_text.split()).replace('"', "'")
+
+
+def record_on_card(asset: str, answer: str) -> None:
+    """Write the vision answer into the asset's card in assets/catalog.yaml (text edit keeps the comments)."""
+    path = objects.ASSET_DIR / "catalog.yaml"
+    text = path.read_text()
+    start = text.index(f"- {{id: {asset},")
+    end = text.index("}", start)
+    card = re.sub(r',\s*vision: "[^"]*"', "", text[start:end])
+    path.write_text(text[:start] + card + f',\n     vision: "{answer}"' + text[end:])
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "--asset":
         render_dir = Path(os.environ.get("RENDER_DIR", Path(__file__).parents[1] / "runs" / "asset_renders"))
         render_dir.mkdir(parents=True, exist_ok=True)
         results = asset_checks(sys.argv[2], render_dir)
+        if "--no-vision" not in sys.argv:
+            answer = vision_check(sys.argv[2], render_dir / f"{sys.argv[2]}_close.png")
+            record_on_card(sys.argv[2], answer)
+            results.append(("vision", None if answer.lower().startswith("yes") else answer))
         for check, reason in results:
             print(f"{'FAIL' if reason else 'ok  '} {check}{': ' + reason if reason else ''}")
         ok = not any(r for _, r in results)
@@ -216,5 +303,5 @@ if __name__ == "__main__":
     failures = run_gates(name, seeds)
     for gate, seed, reason in failures:
         print(f"FAIL {gate} seed={seed}: {reason}")
-    print(f"{name}: {'PASS' if not failures else 'FAIL'} ({seeds} seeds, gates: schema, settle, joints, reach, visible, trivial, oracle, robust)")
+    print(f"{name}: {'PASS' if not failures else 'FAIL'} ({seeds} seeds, gates: schema, prompt, settle, joints, reach, visible, trivial, oracle, robust)")
     sys.exit(1 if failures else 0)

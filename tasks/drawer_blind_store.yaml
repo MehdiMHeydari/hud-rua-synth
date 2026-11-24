@@ -27,4 +27,5 @@ oracle:
   - {at: cabinet.handle, offset: [-0.02, 0, 0], gripper: closed}
   - {at: cabinet.handle, offset: [-0.02, 0, 0.10], gripper: closed}
 # v2: sol 8/20 = 40% at start 0.5 (9 cm strip); now 0.35 (6.3 cm strip for a 4 cm block).
+hidden: {closed.fraction: "'close the drawer' means shut; 5% (9 mm of 18 cm travel) only absorbs settling. Calibrated prompt, not reworded."}
 knobs: {start: 0.35}

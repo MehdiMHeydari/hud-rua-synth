@@ -33,13 +33,22 @@ rua/spec.py (it can miss objects or mislabel them), drop "no match" objects, the
 ## Rules
 - The prompt states every starting state ("The drawer starts closed") and nothing the grader checks
   that the agent can't know. Use world terms only where the task isn't about frames.
+- Every numeric threshold the grader uses (lifted height, near_offset offset and radius, opened/closed
+  fraction, inserted depth, in_zone radius) appears in the prompt in cm/mm/%, or as a phrase that means it
+  ("fully open" >= 90%, "fully closed" <= 5%, "all the way in" for depth, "entirely inside the circle" when
+  the circle's radius = success radius + object radius). Hiding one on purpose needs a `hidden:` entry with
+  the reason. The `prompt` gate checks this.
 - Difficulty comes from smooth knobs (more steps, distractors, other reference frames, tool use),
   not from tolerances near the tool's ~1 cm accuracy. Record knobs in `knobs:`.
 - If the oracle fails, fix geometry or the plan, never loosen success to pass.
 
 ## Loop
-1. `python rua/gates.py <name>`: schema, settle, joints, reach, trivial, oracle, robust (free). Fix and repeat.
-2. `TASK=<name> HUD_LLM_MODEL=oracle EPISODES=5 python rua/run.py`: oracle through the real tool must be 5/5.
-3. `TASK=<name> HUD_LLM_MODEL=gpt-6-sol EPISODES=5 python rua/run.py`: 3/5 or more = too easy, raise a knob;
+One command runs it: `python rua/generate.py "intent"` (or `--image photo.jpg`). The model writes the YAML;
+the script runs schema, the free gates (prompt, settle, joints, reach, visible, trivial, oracle, robust; 5 seeds)
+and the oracle through the real tool (3 episodes), and sends any failure back, up to 4 rounds. A passing task waits
+in tasks/generated/ with a review sheet (runs/review/<name>.png) until a human runs `--approve` or `--reject`.
+
+After approval (by hand, costs money):
+1. `TASK=<name> HUD_LLM_MODEL=gpt-6-sol EPISODES=5 python rua/run.py`: 3/5 or more = too easy, raise a knob;
    0/5 = check traces for harness faults before calling it hard. Confirm with 20 episodes on fresh seeds (SEED0).
-4. Read failed traces; any harness fault becomes a fix plus a new check in rua/checks.py or rua/gates.py.
+2. Read failed traces; any harness fault becomes a fix plus a new check in rua/checks.py or rua/gates.py.

@@ -1,0 +1,16 @@
+name: lift_pill_bottle
+prompt: The small white pill bottle starts upright on the table. Pick it up and hold it with its bottom at least 10 cm above the tabletop.
+objects:
+  - name: pill_bottle
+    shape: asset
+    asset: pill_bottle
+    x: [0.44, 0.52]
+    y: [-0.08, 0.08]
+success:
+  lifted: {object: pill_bottle, height: 0.10}
+oracle:
+  - {at: pill_bottle, offset: [0, 0, 0.17], gripper: open}
+  - {at: pill_bottle, offset: [0, 0, 0.02], gripper: open}
+  - {at: pill_bottle, offset: [0, 0, 0.02], gripper: closed}
+  - {at: pill_bottle, offset: [0, 0, 0.17], gripper: closed}
+knobs: {lift_height_m: 0.10, objects_to_lift: 1}

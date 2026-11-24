@@ -24,4 +24,5 @@ oracle:
   - {at: cabinet.handle, offset: [-0.167, 0, 0], gripper: closed}
   - {at: cabinet.handle, offset: [-0.02, 0, 0], gripper: closed}
   - {at: cabinet.handle, offset: [-0.02, 0, 0.10], gripper: closed}
+hidden: {closed.fraction: "'close the drawer' means shut; 5% (9 mm of 18 cm travel) only absorbs settling. Calibrated prompt, not reworded."}
 knobs: {start: 0.5}

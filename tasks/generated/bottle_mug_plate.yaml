@@ -1,0 +1,42 @@
+name: bottle_mug_plate
+prompt: The small white pill bottle and the coffee mug stand on the table. Put the bottle into the mug. Then push the mug, with the bottle still inside it, across the table into the white circle. The mug's centre must end within 5 cm of the circle's centre. The mug is too wide to grasp, so slide it along the table. At the end the bottle must be inside the mug, and nothing may be held.
+# Intent asked for "push the mug onto the plate". The scanned plate (2.7 cm thick, rim overhanging a
+# smaller foot) is a step the ungraspable mug cannot be pushed up, and no predicate says "on a raised
+# asset" (near_offset requires resting on the table). It is stood in for by a plate-sized flat zone
+# (22 cm circle). A real low-profile plate would need a new building block.
+# v4: in v1-v3 the mug was knocked toward the robot (-x) and the bottle flung far the other way (+x),
+# even in seeds where the push never reached the mug. The fault is the insertion, not the push.
+# - The bottle was dropped over the bbox centre, which includes the handle and sits 1.8 cm off the
+#   cup axis. The 5.4 cm bottle overlapped the rim of the ~7.8 cm bore, wedged and was ejected.
+# - The opposite kicks (bottle +x, mug -x) put the handle on local +x, so the cup axis is at local
+#   x = -1.8 cm.
+# Fix: lower the bottle upright over the cup axis until its bottom is 1.5 cm below the rim, then
+# release.
+# Push (kept from v3): the open gripper cradles the cup wall with both fingers; the handle is on the
+# far side. The tcp is kept 2.7 cm above the table so any palm contact stays low. The tcp stops 6.5
+# cm short of the circle centre on the mug side. The mug ends 2 cm short if the fingers lead, or 2.5
+# cm past if the palm leads.
+objects:
+  - {name: bottle, shape: asset, asset: pill_bottle, x: [0.44, 0.48], y: [0.14, 0.20]}
+  - {name: mug, shape: asset, asset: mug, x: [0.50, 0.52], y: [-0.12, -0.09], yaw: [-5, 5]}
+  - {name: plate_zone, shape: zone, size: [0.22], color: white, x: [0.68, 0.70], y: [-0.12, -0.09]}
+success:
+  inside: {object: bottle, container: mug}
+  in_zone: {object: mug, zone: plate_zone, radius: 0.05}
+oracle:
+  - {at: bottle, offset: [0, 0, 0.20], gripper: open}
+  - {at: bottle, offset: [0, 0, 0.02], gripper: open}
+  - {at: bottle, offset: [0, 0, 0.02], gripper: closed}
+  - {at: bottle, offset: [0, 0, 0.22], gripper: closed}
+  - {at: mug, offset: [-0.018, 0, 0.21], gripper: closed}
+  - {at: mug, offset: [-0.018, 0, 0.16], gripper: closed}
+  - {at: mug, offset: [-0.018, 0, 0.12], gripper: closed}
+  - {at: mug, offset: [-0.018, 0, 0.12], gripper: open}
+  - {at: mug, offset: [-0.018, 0, 0.25], gripper: open}
+  - {at: mug, toward: plate_zone, offset: [-0.13, 0, 0.20], gripper: open}
+  - {at: mug, toward: plate_zone, offset: [-0.13, 0, -0.04], gripper: open}
+  - {at: plate_zone, toward: mug, offset: [0.12, 0, 0.027], gripper: open}
+  - {at: plate_zone, toward: mug, offset: [0.065, 0, 0.027], gripper: open}
+  - {at: plate_zone, toward: mug, offset: [0.13, 0, 0.027], gripper: open}
+  - {at: plate_zone, toward: mug, offset: [0.13, 0, 0.20], gripper: open}
+knobs: {push_distance: 0.18, distractors: 0, zone_radius: 0.05, target: zone_for_plate}

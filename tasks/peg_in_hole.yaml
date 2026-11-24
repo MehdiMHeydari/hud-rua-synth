@@ -19,4 +19,5 @@ oracle:
   - {at: holder, offset: [0, 0, 0.15], gripper: open}
 # v3: sol 1/15 at 7 mm clearance was a harness precision cliff (oracle fails at 5 mm error); 8/10 at
 # 15 mm, 0/10 at 11 mm + rotation (cliff), 8/20 at 13 mm, 7/20 at 12 mm. Now 11.5 mm (passes the 5 mm robust gate) and the square peg starts rotated 20-70 deg from the hole.
+hidden: {inserted.depth: "A released peg drops to the table inside the 4 cm block, so 2 cm only rejects a peg jammed on the rim, which 'into the hole' already excludes."}
 knobs: {clearance_mm: 11.5, peg_yaw_min_deg: 20, peg_yaw_max_deg: 70}

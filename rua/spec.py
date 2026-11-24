@@ -126,6 +126,9 @@ class TaskSpec(BaseModel):
     # Per-object ranges alone keep relations (target always on the same side) fixed across seeds.
     layout_yaw: tuple[float, float] = (0, 0)
     knobs: dict[str, float | str] = {}
+    # Success thresholds deliberately not stated in the prompt, "kind.field" -> why (the `prompt` gate
+    # requires every other one to be stated: OpenRUA traced 79/413 failures to unstated thresholds).
+    hidden: dict[str, str] = {}
 
     @field_validator("success", mode="before")
     @classmethod

@@ -32,4 +32,5 @@ oracle:
   - {at: green, offset: [0, 0.10, 0.005], gripper: closed}
   - {at: green, offset: [0, 0.10, 0.005], gripper: open}
   - {at: green, offset: [0, 0.10, 0.15], gripper: open}
+hidden: {near_offset.radius: "Tolerance, not a target: the 10 cm target is stated; +-3 cm is 3x the tool's stop error. Calibrated prompt, not reworded; a new task would state it."}
 knobs: {frame: side_person, relations: 2, distractors: 3, radius: 0.03}
