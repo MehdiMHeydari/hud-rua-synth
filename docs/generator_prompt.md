@@ -10,7 +10,12 @@ You turn an intent (e.g. "test whether agents can chain open-place-close") into 
   in_zone, inside, stacked, near_offset, unmoved.
 - Placement: `x`, `y`, `yaw` ranges, sampled per seed. Keep everything reachable (x 0.3-0.8 at table height).
 - Oracle: steps `{at: object[.part], offset: [dx,dy,dz] in the object's frame, yaw: deg, gripper: open|closed}`.
-  Tool yaw 0 closes the fingers along world y.
+  Tool yaw 0 closes the fingers along world y. Part offsets (e.g. a drawer `handle`) are for the
+  closed position; add `start * travel` yourself for a drawer that starts open.
+- Gripping a part can move it (closing on a drawer tab nudges the drawer ~2 cm); push with closed
+  fingers when you only need to push.
+- `success` holds one predicate of each kind, so "two blocks inside" isn't expressible yet: ask for a
+  new building block instead of faking it.
 
 ## Rules
 - The prompt states every starting state ("The drawer starts closed") and nothing the grader checks
