@@ -90,8 +90,8 @@ def save_traces(job) -> None:
         (out / f"{r.trace_id or id(r)}.json").write_text(json.dumps(record, indent=1))
 
 
-# Rough $/episode at 40 steps, from hud.ai trace pages; exact cost is on each trace.
-COST_PER_EPISODE = {"gpt-6-luna": 0.015, "gpt-6-sol": 0.12, "oracle": 0.0}
+# $/episode at 40 steps, from hud.ai trace pages (sol $0.13-0.16); exact cost is on each trace.
+COST_PER_EPISODE = {"gpt-6-luna": 0.015, "gpt-6-sol": 0.145, "oracle": 0.0}
 
 
 def wilson(k: int, n: int, z: float = 1.645) -> tuple[float, float]:

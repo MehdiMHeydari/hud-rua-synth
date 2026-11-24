@@ -36,15 +36,6 @@ def hold(sim: Sim, pos, rpy, gripper=1.0, seconds=2.0):
         sim.track(pos, tool_quat(*rpy), gripper, 0.05)
 
 
-def pixel(sim: Sim, camera: str, point, size=256):
-    """Where a world point lands in a camera image (u right, v down)."""
-    cam = sim.model.camera(camera).id
-    R = sim.data.cam_xmat[cam].reshape(3, 3)
-    p = R.T @ (np.asarray(point) - sim.data.cam_xpos[cam])
-    f = (size / 2) / np.tan(np.radians(sim.model.cam_fovy[cam]) / 2)
-    return np.array([size / 2 + f * p[0] / -p[2], size / 2 - f * p[1] / -p[2]])
-
-
 def sim_checks() -> None:
     s = Sim(spec.load("lift_cube"))
     cube = s.body_pos("cube")
@@ -72,17 +63,17 @@ def sim_checks() -> None:
           f"closing axis {y_axis.round(2)} then {x_axis.round(2)}")
 
     # Notes: "top image: image up is +x, image left is +y".
-    u0, v0 = pixel(s, "top", [0.5, 0, 0])
-    u1, v1 = pixel(s, "top", [0.6, 0, 0])
-    u2, _ = pixel(s, "top", [0.5, 0.1, 0])
+    u0, v0 = s.pixel("top", [0.5, 0, 0])
+    u1, v1 = s.pixel("top", [0.6, 0, 0])
+    u2, _ = s.pixel("top", [0.5, 0.1, 0])
     check("top image: +x is up, +y is left", v1 < v0 - 5 and u2 < u0 - 5, f"+x moves v {v1 - v0:+.0f}px, +y moves u {u2 - u0:+.0f}px")
 
     # Notes: "an object between the fingertips in the wrist image is between the fingers".
     hold(s, [cube[0], cube[1], 0.03], (np.pi, 0, 0))
-    u, _ = pixel(s, "wrist", cube)
+    u, _ = s.pixel("wrist", cube)
     check("wrist image: aligned cube is centred between fingertips", abs(u - 128) < 15, f"cube at u={u:.0f} (centre 128)")
     hold(s, [cube[0], cube[1] + 0.07, 0.03], (np.pi, 0, 0))
-    u_off, _ = pixel(s, "wrist", cube)
+    u_off, _ = s.pixel("wrist", cube)
     check("wrist image: 7 cm misalignment is visible", abs(u_off - 128) > 40, f"cube at u={u_off:.0f}")
 
     # Grasp line on real physics: closing on nothing vs on the cube.

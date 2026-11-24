@@ -77,6 +77,18 @@ def gate_robust(sim: Sim, seed: int, error: float = 0.005) -> str | None:
     return None if passed >= 3 else f"oracle fails with 5 mm placement error ({passed}/4): precision tighter than the tool allows"
 
 
+def gate_visible(sim: Sim, seed: int, margin: float = 0.05) -> str | None:
+    """Every object starts at least 5 cm inside the top camera's view. (Hook cube spawned at the
+    view's edge, so a small nudge lost it from view in 4/8 reviewed failures.)"""
+    for name in sim.task.sample(seed):
+        c = sim.body_pos(name)
+        for dx, dy in ((margin, 0), (-margin, 0), (0, margin), (0, -margin)):
+            u, v = sim.pixel("top", c + [dx, dy, 0])
+            if not (0 <= u < 256 and 0 <= v < 256):
+                return f"{name} is within {margin * 100:.0f} cm of the top camera's edge"
+    return None
+
+
 def gate_trivial(sim: Sim, seed: int, rng: np.random.Generator) -> str | None:
     """Gate 3: not already solved, and doing nothing or acting randomly doesn't solve it."""
     if sim.success():
@@ -111,6 +123,7 @@ def run_gates(name: str, seeds: int) -> list[tuple[str, int, str]]:
         for gate, fn in (("settle", lambda: gate_settle(sim, seed)),
                          ("joints", lambda: gate_joints(sim, seed)),
                          ("reach", lambda: gate_reach(sim, seed)),
+                         ("visible", lambda: gate_visible(sim, seed)),
                          ("trivial", lambda: gate_trivial(sim, seed, rng)),
                          ("oracle", lambda: gate_oracle(sim, seed)),
                          ("robust", lambda: gate_robust(sim, seed))):
@@ -125,5 +138,5 @@ if __name__ == "__main__":
     failures = run_gates(name, seeds)
     for gate, seed, reason in failures:
         print(f"FAIL {gate} seed={seed}: {reason}")
-    print(f"{name}: {'PASS' if not failures else 'FAIL'} ({seeds} seeds, gates: schema, settle, joints, reach, trivial, oracle, robust)")
+    print(f"{name}: {'PASS' if not failures else 'FAIL'} ({seeds} seeds, gates: schema, settle, joints, reach, visible, trivial, oracle, robust)")
     sys.exit(1 if failures else 0)

@@ -140,6 +140,13 @@ class Sim:
     def body_pos(self, name: str) -> np.ndarray:
         return self.data.body(name).xpos.copy()
 
+    def pixel(self, camera: str, point, size: int = 256) -> np.ndarray:
+        """Where a world point lands in a camera image (u right, v down)."""
+        cam = self.model.camera(camera).id
+        p = self.data.cam_xmat[cam].reshape(3, 3).T @ (np.asarray(point) - self.data.cam_xpos[cam])
+        f = (size / 2) / np.tan(np.radians(self.model.cam_fovy[cam]) / 2)
+        return np.array([size / 2 + f * p[0] / -p[2], size / 2 - f * p[1] / -p[2]])
+
     def success(self) -> bool:
         return self.task.is_success(self)
 
