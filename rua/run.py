@@ -64,12 +64,30 @@ async def main() -> None:
         verdict = f"INVALID: {errors}/{n} rollouts errored (harness/spec bug, not model failures)"
     cost = n * COST_PER_EPISODE.get(MODEL, 0.0)
     print(f"{TASK}: {k}/{n} = {k / n:.0%} (90% CI {lo:.0%}-{hi:.0%}) -> {verdict}; est cost ${cost:.2f}")
+    save_traces(job)
     log = Path(__file__).parents[1] / "runs" / "log.jsonl"
     log.parent.mkdir(exist_ok=True)
     with log.open("a") as f:
         f.write(json.dumps({"time": time.strftime("%Y-%m-%d %H:%M"), "task": TASK, "model": MODEL, "steps": STEPS,
                             "effort": EFFORT, "cameras": os.environ.get("CAMERAS", "top,wrist"), "seed0": SEED0,
                             "k": k, "n": n, "errors": errors, "job": job.id, "est_cost": round(cost, 3)}) + "\n")
+
+
+def save_traces(job) -> None:
+    """Each episode's steps to runs/traces/<job>/<trace>.json (images dropped), so trace review
+    doesn't depend on the browser."""
+    def strip(x):
+        if isinstance(x, dict):
+            return {k: strip(v) for k, v in x.items()}
+        if isinstance(x, list):
+            return [strip(v) for v in x]
+        return f"<{len(x)} chars omitted>" if isinstance(x, str) and len(x) > 4000 else x
+
+    out = Path(__file__).parents[1] / "runs" / "traces" / str(job.id)
+    out.mkdir(parents=True, exist_ok=True)
+    for r in job.runs:
+        record = {"reward": r.reward, "trace": strip(r.trace.model_dump(mode="json"))}
+        (out / f"{r.trace_id or id(r)}.json").write_text(json.dumps(record, indent=1))
 
 
 # Rough $/episode at 40 steps, from hud.ai trace pages; exact cost is on each trace.
