@@ -161,6 +161,17 @@ class TaskSpec(BaseModel):
         sim gives body_pos(name), model, data, seed. Plain bools: numpy bools break HUD's JSON grading."""
         return {kind: bool(self._holds(kind, p, sim)) for kind, p in self.success.items()}
 
+    def final_state(self, sim) -> dict:
+        """Numbers behind the grade for trace review: object positions (mm), drawer open fraction,
+        and what the arm still touches. Review agents couldn't tell "drawer 6% open" from "never opened"."""
+        out = {}
+        for o in self.objects:
+            pos = [round(float(v) * 1000) for v in sim.body_pos(o.name)]
+            out[o.name] = {"pos_mm": pos, "held": bool(objects.touching_robot(sim.model, sim.data, o.name))}
+            if o.shape in objects.ARTICULATED:
+                out[o.name]["open"] = round(objects.joint_fraction(sim.model, sim.data, o.name)[0], 3)
+        return out
+
     def is_success(self, sim) -> bool:
         return all(self.conditions(sim).values())
 

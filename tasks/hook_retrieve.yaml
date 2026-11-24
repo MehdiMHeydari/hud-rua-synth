@@ -1,8 +1,8 @@
 name: hook_retrieve
 prompt: The red cube is out of the arm's reach. Bring it into the green circle so it lies entirely inside it.
 objects:
-  - {name: cube, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [1.03, 1.06], y: [-0.08, 0.08]}
-  - {name: hook, shape: hook, size: [0.40, 0.12, 0.04], color: blue, mass: 0.05, x: [0.48, 0.53], y: [-0.32, -0.27]}
+  - {name: cube, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.98, 1.01], y: [-0.08, 0.08]}
+  - {name: hook, shape: hook, size: [0.34, 0.12, 0.04], color: blue, mass: 0.05, x: [0.48, 0.53], y: [-0.32, -0.27]}
   - {name: goal, shape: zone, size: [0.13], color: green, x: [0.62, 0.68], y: [-0.02, 0.02]}
 success:
   in_zone: {object: cube, zone: goal, radius: 0.04}
@@ -13,11 +13,11 @@ oracle:
   - {at: hook.handle, gripper: open}
   - {at: hook.handle, gripper: closed}
   - {at: hook.handle, offset: [0, 0, 0.15], gripper: closed}
-  - {at: cube, offset: [-0.275, -0.06, 0.15], gripper: closed}
-  - {at: cube, offset: [-0.275, -0.06, 0.025], gripper: closed}
-  - {at: goal, offset: [-0.295, -0.06, 0.025], gripper: closed}
-  - {at: goal, offset: [-0.295, -0.06, 0.025], gripper: open}
-  - {at: goal, offset: [-0.295, -0.06, 0.15], gripper: open}
-# v3 (v1 cube +-2 cm: 9/25; v2 +-8 cm sideways: 6/10): cube also 7 cm further out (x 1.03-1.06),
-# so the hook is used near its full length.
-knobs: {cube_x_min: 1.03, cube_y_spread: 0.08, hook_length: 0.40}
+  - {at: cube, offset: [-0.215, -0.06, 0.15], gripper: closed}
+  - {at: cube, offset: [-0.215, -0.06, 0.025], gripper: closed}
+  - {at: goal, offset: [-0.235, -0.06, 0.025], gripper: closed}
+  - {at: goal, offset: [-0.235, -0.06, 0.025], gripper: open}
+  - {at: goal, offset: [-0.235, -0.06, 0.15], gripper: open}
+# v4 (v1 +-2 cm: 9/25; v2 +-8 cm: 6/10; v3 x 1.03-1.06: 3/20 but the cube sat at the top camera's
+# edge, failing the visible gate): cube back in view (x 0.98-1.01) and the hook 6 cm shorter.
+knobs: {cube_x_min: 0.98, cube_y_spread: 0.08, hook_length: 0.34}

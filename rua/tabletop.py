@@ -85,4 +85,5 @@ class TabletopBridge(GymBridge):
     def result_slots(self):
         conditions = self.env.spec.conditions(self.env.sim)  # logged with the grade for trace review
         ok = all(conditions.values())
-        return [{"score": float(ok), "success": ok, "conditions": conditions}]
+        return [{"score": float(ok), "success": ok, "conditions": conditions,
+                 "final_state": self.env.spec.final_state(self.env.sim)}]

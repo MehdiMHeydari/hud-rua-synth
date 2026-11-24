@@ -2,29 +2,29 @@ name: drawer_blind_store
 prompt: The drawer starts partly open. Put the yellow block inside the drawer and close the drawer.
 # Self-check under occlusion: once the drawer shuts, the top camera can't show the block, so only
 # an agent that checked the drop before closing (or reopens to look) knows it worked. The partly
-# open drawer leaves an ~8 cm strip of tray visible, so a sloppy drop lands on the front wall or the
+# open drawer leaves a strip of tray visible, so a sloppy drop lands on the front wall or the
 # cabinet top and still "looks done". Knob: start (smaller = narrower strip, more occlusion).
 objects:
   - {name: cabinet, shape: drawer, size: [0.25, 0.30, 0.14], color: wood, mass: 0.5,
-     x: [0.62, 0.68], y: [-0.05, 0.1], yaw: [-15, 15], travel: 0.18, damping: 2.0, start: 0.5}
+     x: [0.62, 0.68], y: [-0.05, 0.1], yaw: [-15, 15], travel: 0.18, damping: 2.0, start: 0.35}
   - {name: block, shape: box, size: [0.04, 0.04, 0.04], color: yellow, x: [0.4, 0.48], y: [-0.38, -0.33]}
 success:
   inside: {object: block, container: cabinet}
   closed: {object: cabinet, fraction: 0.05}
-# Drop the block into the exposed strip (tray centre is 9 cm out, so -0.165 is 7.5 cm in front of
-# it), then push the drawer shut on the handle tab's end with closed
+# Drop the block into the middle of the exposed strip (6.3 cm at start 0.35), then push the drawer shut on the handle tab's end with closed
 # fingers (grasping the tab nudged the drawer up to 2 cm, so the push hit the stop early).
 oracle:
   - {at: block, offset: [0, 0, 0.15], gripper: open}
   - {at: block, gripper: open}
   - {at: block, gripper: closed}
   - {at: block, offset: [0, 0, 0.15], gripper: closed}
-  - {at: cabinet, offset: [-0.165, 0, 0.20], gripper: closed}
-  - {at: cabinet, offset: [-0.165, 0, 0.045], gripper: closed}
-  - {at: cabinet, offset: [-0.165, 0, 0.045], gripper: open}
-  - {at: cabinet, offset: [-0.165, 0, 0.20], gripper: open}
+  - {at: cabinet, offset: [-0.157, 0, 0.20], gripper: closed}
+  - {at: cabinet, offset: [-0.157, 0, 0.045], gripper: closed}
+  - {at: cabinet, offset: [-0.157, 0, 0.045], gripper: open}
+  - {at: cabinet, offset: [-0.157, 0, 0.20], gripper: open}
   - {at: cabinet.handle, offset: [-0.14, 0, 0.10], gripper: closed}
   - {at: cabinet.handle, offset: [-0.14, 0, 0], gripper: closed}
   - {at: cabinet.handle, offset: [-0.02, 0, 0], gripper: closed}
   - {at: cabinet.handle, offset: [-0.02, 0, 0.10], gripper: closed}
-knobs: {start: 0.5}
+# v2: sol 8/20 = 40% at start 0.5 (9 cm strip); now 0.35 (6.3 cm strip for a 4 cm block).
+knobs: {start: 0.35}
