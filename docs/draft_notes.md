@@ -23,6 +23,9 @@ Where it fails (in the 5-30% band) and why:
 - Tool use: hook_retrieve 33%. Hook slips off the cube; abandons the hook to grab the out-of-reach cube.
 - Self-verification: false "done" claims (2/4 peg failures; drawer run ignored "stopped 3 cm short"). Literature: sol false-claims in 63% of unsolved non-timeout episodes (RoboARCade).
 - Cheap vs mid model: luna 25% vs sol 85% on lift_cube, so cheap models are screeners, not calibrators.
+- Selection vs action contrast: picking "the red cube closest to the blue cylinder" among 4 identical
+  cubes at a 2 cm margin = 100% (25/25), but placing relative to another person's left = 28%. The gap is
+  acting in a non-camera frame and verifying the result, not seeing.
 
 Non-obvious lesson: most early "failures" were the harness, not the model.
 - All 8 luna failures traced to harness faults (offset wrist cam, continuous gripper "echo", roll=0 trap, mislabelled grasp line).

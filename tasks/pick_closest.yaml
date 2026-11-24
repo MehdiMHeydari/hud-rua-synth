@@ -1,19 +1,26 @@
 name: pick_closest
 prompt: Pick up the red cube that is closest to the blue cylinder (centre to centre) and hold it at least 10 cm above the table. Leave every other object where it is.
-# Three identical red cubes ring the blue cylinder at similar distances; colour can't single out the
-# target, only the relation can. A green cylinder sits beside a far cube, so "closest to a cylinder"
-# picks the wrong one. Margin: ranges are set so the target is always >= 4 cm closer to blue than any
-# other red cube (checked over 200 seeds): clear to a careful look, a near-tie at a glance.
-# Knob: margin. Shrink the target-distractor distance gap to make it harder (never below ~2 cm).
+# Five identical red cubes ring the blue cylinder, 72 deg apart: the target at 10 cm, the four
+# distractors at 12.0 / 12.2 / 12.5 / 13.0 cm. Colour can't single out the target, only the
+# distance can, and the gap is ~4-6 px in the top image. A green cylinder sits 7 cm from a far cube,
+# so "closest to a cylinder" picks the wrong one. Cubes get random yaw so the agent compares centres
+# of rotated squares, not aligned edges. Placement jitter is +-1.5 mm, so the gap stays >= 1.5 cm on
+# every seed (checked over 200); variety comes from layout_yaw and cube yaw.
+# Rejected: a tall landmark for perspective parallax. At 1.5 m camera height a 12 cm cylinder's top
+# shifts < 1 cm in the image, below the margin, so it adds noise rather than a smooth knob.
+# Ring spacing >= 13 cm centre to centre, so the 8 cm open fingers never touch a neighbour.
+# Knobs: margin (gap to the nearest distractor; keep >= 1.5 cm), distractors (ring slots).
 objects:
-  - {name: blue, shape: cylinder, size: [0.04, 0.06], color: blue, x: [0.545, 0.555], y: [-0.005, 0.005]}
-  - {name: target, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.465, 0.475], y: [0.045, 0.055]}
-  - {name: red_a, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.685, 0.695], y: [0.075, 0.085]}
-  - {name: red_b, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.585, 0.595], y: [-0.16, -0.15]}
-  - {name: green, shape: cylinder, size: [0.04, 0.06], color: green, x: [0.655, 0.665], y: [-0.20, -0.19]}
+  - {name: blue, shape: cylinder, size: [0.04, 0.06], color: blue, x: [0.5485, 0.5515], y: [-0.0015, 0.0015]}
+  - {name: target, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.4485, 0.4515], y: [-0.0015, 0.0015], yaw: [-30, 30]}
+  - {name: red_a, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.5115, 0.5145], y: [0.1125, 0.1155], yaw: [-30, 30]}
+  - {name: red_b, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.6475, 0.6505], y: [0.0705, 0.0735], yaw: [-30, 30]}
+  - {name: red_c, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.6495, 0.6525], y: [-0.0745, -0.0715], yaw: [-30, 30]}
+  - {name: red_d, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.5085, 0.5115], y: [-0.1255, -0.1225], yaw: [-30, 30]}
+  - {name: green, shape: cylinder, size: [0.04, 0.06], color: green, x: [0.7025, 0.7055], y: [0.1105, 0.1135]}
 success:
   lifted: {object: target, height: 0.10}
-  unmoved: {objects: [blue, red_a, red_b, green], tol: 0.03}
+  unmoved: {objects: [blue, red_a, red_b, red_c, red_d, green], tol: 0.03}
 oracle:
   - {at: target, offset: [0, 0, 0.15], gripper: open}
   - {at: target, gripper: open}
@@ -21,4 +28,4 @@ oracle:
   - {at: target, offset: [0, 0, 0.20], gripper: closed}
 # The whole layout is rotated per seed so the target isn't always on the same side of the landmark.
 layout_yaw: [-60, 60]
-knobs: {margin_cm: 4, distractors: 2, decoy_landmark: green, layout_yaw_deg: 60}
+knobs: {margin_cm: 2, distractors: 4, decoy_landmark: green, layout_yaw_deg: 60, cube_yaw_deg: 30}
