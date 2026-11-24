@@ -8,7 +8,12 @@ You turn an intent (e.g. "test whether agents can chain open-place-close") into 
   part `handle`, fields `travel`, `damping`, `start`); hole_block (fixed, field `hole`); zone (fixed, visual only).
 - Success predicates (all must hold, graded on the final state): lifted, opened, closed, inserted,
   in_zone, inside, stacked, near_offset, unmoved.
-- Placement: `x`, `y`, `yaw` ranges, sampled per seed. Keep everything reachable (x 0.3-0.8 at table height).
+- Placement: `x`, `y`, `yaw` ranges, sampled per seed. Keep everything reachable (x 0.3-0.8 at table height)
+  and >= 5 cm inside the top camera's view (roughly x 0.0-1.0, y +-0.6; the `visible` gate checks).
+  `layout_yaw: [lo, hi]` rotates the whole layout per seed so relations aren't always on the same side.
+- Ranges are independent per object, so relative distances jitter by the sum of the ranges: if the task
+  depends on a relation (closest, left of), sample 200 seeds with `spec.load(...).sample(seed)` and check
+  the margin holds on all of them. Gates run 5 seeds by default (`SEEDS=12` for more).
 - Oracle: steps `{at: object[.part], offset: [dx,dy,dz] in the object's frame, yaw: deg, gripper: open|closed}`.
   Tool yaw 0 closes the fingers along world y. Part offsets (e.g. a drawer `handle`) are for the
   closed position; add `start * travel` yourself for a drawer that starts open.

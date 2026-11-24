@@ -1,0 +1,24 @@
+name: pick_closest
+prompt: Pick up the red cube that is closest to the blue cylinder (centre to centre) and hold it at least 10 cm above the table. Leave every other object where it is.
+# Three identical red cubes ring the blue cylinder at similar distances; colour can't single out the
+# target, only the relation can. A green cylinder sits beside a far cube, so "closest to a cylinder"
+# picks the wrong one. Margin: ranges are set so the target is always >= 4 cm closer to blue than any
+# other red cube (checked over 200 seeds): clear to a careful look, a near-tie at a glance.
+# Knob: margin. Shrink the target-distractor distance gap to make it harder (never below ~2 cm).
+objects:
+  - {name: blue, shape: cylinder, size: [0.04, 0.06], color: blue, x: [0.545, 0.555], y: [-0.005, 0.005]}
+  - {name: target, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.465, 0.475], y: [0.045, 0.055]}
+  - {name: red_a, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.685, 0.695], y: [0.075, 0.085]}
+  - {name: red_b, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.585, 0.595], y: [-0.16, -0.15]}
+  - {name: green, shape: cylinder, size: [0.04, 0.06], color: green, x: [0.655, 0.665], y: [-0.20, -0.19]}
+success:
+  lifted: {object: target, height: 0.10}
+  unmoved: {objects: [blue, red_a, red_b, green], tol: 0.03}
+oracle:
+  - {at: target, offset: [0, 0, 0.15], gripper: open}
+  - {at: target, gripper: open}
+  - {at: target, gripper: closed}
+  - {at: target, offset: [0, 0, 0.20], gripper: closed}
+# The whole layout is rotated per seed so the target isn't always on the same side of the landmark.
+layout_yaw: [-60, 60]
+knobs: {margin_cm: 4, distractors: 2, decoy_landmark: green, layout_yaw_deg: 60}

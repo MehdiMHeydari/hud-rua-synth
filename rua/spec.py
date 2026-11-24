@@ -104,6 +104,9 @@ class TaskSpec(BaseModel):
     objects: list[Obj] = Field(min_length=1)
     success: dict[Literal[tuple(PREDICATES)], Union[tuple(PREDICATES.values())]]  # all must hold
     oracle: list[Step] = Field(min_length=1)
+    # Rotate the whole layout (positions and yaws) about its centre by a per-seed angle, degrees.
+    # Per-object ranges alone keep relations (target always on the same side) fixed across seeds.
+    layout_yaw: tuple[float, float] = (0, 0)
     knobs: dict[str, float | str] = {}
 
     @field_validator("success", mode="before")
@@ -137,8 +140,17 @@ class TaskSpec(BaseModel):
     def sample(self, seed: int) -> dict[str, tuple[np.ndarray, float]]:
         """Object name -> (origin position, yaw radians) for this seed. Deterministic."""
         rng = np.random.default_rng(seed)
-        return {o.name: (np.array([rng.uniform(*o.x), rng.uniform(*o.y), objects.base_z(o.shape, o.size)]),
-                         np.radians(rng.uniform(*o.yaw))) for o in self.objects}
+        poses = {o.name: (np.array([rng.uniform(*o.x), rng.uniform(*o.y), objects.base_z(o.shape, o.size)]),
+                          np.radians(rng.uniform(*o.yaw))) for o in self.objects}
+        if self.layout_yaw == (0, 0):  # no extra draw, so existing tasks keep their seeds
+            return poses
+        a = np.radians(rng.uniform(*self.layout_yaw))
+        pivot = np.mean([[np.mean(o.x), np.mean(o.y)] for o in self.objects], axis=0)
+        rot = np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
+        for name, (pos, yaw) in poses.items():
+            pos[:2] = pivot + rot @ (pos[:2] - pivot)
+            poses[name] = (pos, yaw + a)
+        return poses
 
     def plan(self, seed: int) -> list[tuple[np.ndarray, float, float]]:
         """Oracle waypoints for this seed: (tcp position, tool yaw, gripper 1 open / 0 closed)."""

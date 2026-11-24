@@ -9,8 +9,11 @@ What gpt-6-sol does well (top+wrist cams, grasp line, 40 steps):
 - Matching gripper yaw to an object: rotated bar 100%, even with 1 cm spare in the gripper.
 - Simple pushing to a goal: 60-80% (saturates; tightening precision just hits the tool's ~1 cm limit).
 
-Final calibrated set (sol, n>=20 each): open_drawer 20%, drawer_store_close 15%, stack_ordered 16%,
-place_relative 28%, hook_retrieve 15%, peg_in_hole 25%. Luna 0-10% on all six (same ranking).
+Final calibrated set (sol, n>=20 each, all passing every gate): open_drawer 20%, drawer_store_close 15%,
+drawer_blind_store 25% (written by the generator agent from a one-line intent), stack_ordered 16%,
+place_relative 28%, peg_in_hole 25%, hook_retrieve 20%. Luna 0-10% on all (same ranking).
+Failure evidence from trace reviews: false "done" claims dominate peg (6/8 failures) and place_relative
+(6/7); place_relative errors are frame flips ("their left is toward the robot"), never camera-left/right.
 
 Where it fails (in the 5-30% band) and why:
 - Multi-step chains: drawer_store_close 20%. Undoes its own progress (pushes drawer shut early), misreads state (closed cabinet top read as open drawer before the prompt said "starts closed").
@@ -41,7 +44,7 @@ Suggested task groups (each has a smooth knob): multi-step chains (steps), artic
 
 ## 3. Performance, bottlenecks, scale
 
-- Cost: sol ~$0.12/episode (40 steps), luna ~$0.015; free gates cost nothing and caught most problems.
+- Cost: sol $0.13-0.16/episode (40 steps, from trace pages), luna ~$0.015; ~$50 total model spend for 7 calibrated tasks; free gates cost nothing and caught most problems.
 - Calibration statistics are the real bottleneck: n=10 gives a ~40-point-wide interval (2/10 -> 7-46%), and real batches swung 2/10 -> 6/10 on fresh seeds; 5-30% needs ~20-30 episodes per task (~$3).
 - Precision knobs are cliffs: peg clearance 11 mm 0/10, 11.5 mm 5/20, 12 mm 7/20, 15 mm 8/10. Smooth knobs (steps, distance, frames) were easier to land.
 - Precision knobs cliff instead of scaling (success flat, then 0% once below tool + agent error); prefer smooth knobs (steps, distractors, frames).
