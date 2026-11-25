@@ -18,7 +18,7 @@ GEOMS = {"box": mujoco.mjtGeom.mjGEOM_BOX, "cylinder": mujoco.mjtGeom.mjGEOM_CYL
 PRIMITIVES = tuple(GEOMS)
 COMPOUND = ("hook",)  # free bodies made of several boxes
 ARTICULATED = ("drawer",)
-FIXED = ("hole_block", "zone", "platform")
+FIXED = ("hole_block", "zone", "platform", "seesaw")  # seesaw: fixed fulcrum, its plank tilts on a hinge
 ASSET = ("asset",)  # a free body from the library; size and mass come from its catalog card
 
 ASSET_DIR = Path(__file__).parents[1] / "assets"
@@ -48,7 +48,7 @@ def part_offset(shape: str, size: list[float], part: str | None) -> np.ndarray:
 
 def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mass: float,
         travel: float = 0.2, damping: float = 2.0, hole: float = 0.04, asset: str | None = None,
-        friction: float = 1.0) -> None:
+        friction: float = 1.0, pivot: float = 0.05) -> None:
     """Add one object to the scene. Primitives and compounds are free bodies; templates are fixed to the table."""
     if shape in PRIMITIVES:
         body = spec.worldbody.add_body(name=name)
@@ -66,6 +66,8 @@ def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mas
     elif shape == "asset":
         centre, _, mass_at_1000 = measure(asset)
         _add_asset(spec, name, asset, density=1000 * mass / mass_at_1000, offset=-centre)
+    elif shape == "seesaw":
+        _add_seesaw(spec, name, size, rgba, mass, pivot, damping)
     elif shape == "platform":  # a solid fixed box, e.g. a ledge to slide things over
         spec.worldbody.add_body(name=name).add_geom(type=GEOMS["box"], size=[v / 2 for v in size],
                                                     pos=[0, 0, size[2] / 2], rgba=rgba)
@@ -125,6 +127,30 @@ def _add_drawer(spec, name, size, rgba, mass, travel, damping) -> None:
     # 20 cm-wide hand stays clear of the cabinet (a bar handle would make it hit the cabinet top).
     drawer.add_geom(type=box, pos=[-d / 2 - HANDLE_OUT / 2, 0, h / 2], size=[HANDLE_OUT / 2, 0.01, 0.015],
                     rgba=grey, mass=mass / 10, condim=4)
+
+
+def _add_seesaw(spec, name, size, rgba, mass, pivot, damping) -> None:
+    """A plank (size [length along x, width, thickness]) on a hinge about its centre's y axis, `pivot`
+    m above the table, on a fixed fulcrum block. Starts level; the table stops each end. `damping`
+    (N*m*s/rad) slows the swing. Plank body `<name>_plank`, joint `<name>_hinge`."""
+    length, width, t = size
+    box = mujoco.mjtGeom.mjGEOM_BOX
+    base = spec.worldbody.add_body(name=name)
+    base.add_geom(type=box, size=[0.015, width / 2, (pivot - t / 2) / 2], pos=[0, 0, (pivot - t / 2) / 2],
+                  rgba=[0.75, 0.75, 0.75, 1])
+    plank = base.add_body(name=f"{name}_plank", pos=[0, 0, pivot])
+    spec.add_exclude(bodyname1=name, bodyname2=f"{name}_plank")  # rides on the hinge, not on the block
+    plank.add_joint(name=f"{name}_hinge", type=mujoco.mjtJoint.mjJNT_HINGE, axis=[0, 1, 0], damping=damping)
+    plank.add_geom(type=box, size=[length / 2, width / 2, t / 2], rgba=rgba, mass=mass, condim=4)
+    # A short dark mark across each end, so tilt and ends read in the top image.
+    for sx in (-1, 1):
+        plank.add_geom(type=box, size=[0.005, width / 2, 0.001], pos=[sx * (length / 2 - 0.005), 0, t / 2 + 0.001],
+                       rgba=[0.1, 0.1, 0.1, 1], contype=0, conaffinity=0, mass=0)
+
+
+def seesaw_tilt(model: mujoco.MjModel, data: mujoco.MjData, name: str) -> float:
+    """Plank angle in degrees (positive: the +x end down)."""
+    return float(np.degrees(data.qpos[model.joint(f"{name}_hinge").qposadr[0]]))
 
 
 def _add_hole_block(spec, name, size, rgba, hole) -> None:

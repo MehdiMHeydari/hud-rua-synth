@@ -9,7 +9,8 @@ rua/spec.py (it can miss objects or mislabel them), drop "no match" objects, the
 
 ## Building blocks (the only vocabulary; rua/spec.py is the source of truth)
 - Shapes: box, cylinder, sphere (free); hook (free, compound, part `handle`); drawer (articulated,
-  part `handle`, fields `travel`, `damping`, `start`); hole_block (fixed, field `hole`); platform (fixed solid box, e.g. a ledge); zone (fixed, visual only; size `[d]` circle or `[x, y]` rectangle).
+  part `handle`, fields `travel`, `damping`, `start`); hole_block (fixed, field `hole`); platform (fixed solid box, e.g. a ledge); seesaw (fixed fulcrum, plank `size` [length, width, thickness] on a
+  hinge `pivot` m up, `damping`; starts level, the table stops its ends); zone (fixed, visual only; size `[d]` circle or `[x, y]` rectangle).
   Primitives take `friction` (default 1; it also sets grip, MuJoCo uses the larger of the two).
 - Scanned assets: `{shape: asset, asset: <id>}` with an `admitted: true` id from `assets/catalog.yaml`; size and
   mass come from the card (never set `size`; no `color`, they are textured). Body origin = bbox centre, so
@@ -18,6 +19,7 @@ rua/spec.py (it can miss objects or mislabel them), drop "no match" objects, the
 - Success predicates (all must hold, graded on the final state): lifted, opened, closed, inserted,
   in_zone, inside, stacked, near_offset, unmoved, clear (no listed object's centre over a zone, all at rest on the table), tipped (tilted >= `angle` deg),
   at_goal (each centre within `radius` of its goal pose, resting; the agent sees the goals only as a goal image).
+  overhang (a box's farthest corner >= `beyond` m past a platform's +x face, released, above its top).
 - `z` on an object: height of the surface it starts on (e.g. on a platform); offsets are from its centre.
 - Placement: `x`, `y`, `yaw` ranges, sampled per seed. Keep everything reachable (x 0.3-0.8 at table height)
   and >= 5 cm inside the top camera's view (roughly x 0.0-1.0, y +-0.6; the `visible` gate checks).

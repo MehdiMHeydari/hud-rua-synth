@@ -51,7 +51,7 @@ def build_spec(task: TaskSpec) -> mujoco.MjSpec:
                pos=[0.45, 0, TABLE_Z - 0.375], rgba=[0.6, 0.45, 0.3, 1])
     for o in task.objects:  # placed per seed in Sim.reset
         objects.add(spec, o.name, o.shape, o.size, COLORS.get(o.color), o.mass, o.travel, o.damping, o.hole, o.asset,
-                    o.friction)
+                    o.friction, o.pivot)
     # Over the robot's left shoulder: roughly image up = robot forward, image left = robot
     # left (no accidental mirroring), offset sideways so the arm doesn't hide the workspace.
     w.add_camera(name="shoulder", pos=[-0.3, 0.45, 1.2], xyaxes=look_at([-0.3, 0.45, 1.2], [0.5, 0, 0]), fovy=60)

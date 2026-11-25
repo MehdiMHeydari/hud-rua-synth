@@ -1,0 +1,48 @@
+name: balance_sort
+prompt: >-
+  The three red cubes (5 cm) look identical but have different weights. Place them in the three white
+  circles, ordered from lightest to heaviest going from the robot's left to its right (in the top
+  image: left to right): each cube's centre within 4 cm of its circle's centre. A balance stands at
+  the far side of the table: a plank on a central pivot that starts level and tips toward the heavier
+  side when cubes rest on both ends. Leave every cube released and at rest.
+objects:
+  - {name: light, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 0.10, x: [0.47, 0.50], y: [0.13, 0.16]}
+  - {name: medium, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 0.15, x: [0.47, 0.50], y: [-0.015, 0.015]}
+  - {name: heavy, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 0.22, x: [0.47, 0.50], y: [-0.16, -0.13]}
+  - {name: balance, shape: seesaw, size: [0.40, 0.07, 0.02], pivot: 0.08, damping: 0.05, mass: 0.3, color: wood,
+     x: [0.68, 0.70], y: [-0.01, 0.01], yaw: [90, 90]}
+  - {name: z_left, shape: zone, size: [0.13], color: white, x: [0.32, 0.33], y: [0.14, 0.15]}
+  - {name: z_mid, shape: zone, size: [0.13], color: white, x: [0.32, 0.33], y: [-0.005, 0.005]}
+  - {name: z_right, shape: zone, size: [0.13], color: white, x: [0.32, 0.33], y: [-0.15, -0.14]}
+shuffle: [[light, medium, heavy]]
+success:
+  in_zone:
+    - {object: light, zone: z_left, radius: 0.04}
+    - {object: medium, zone: z_mid, radius: 0.04}
+    - {object: heavy, zone: z_right, radius: 0.04}
+oracle:
+  - {at: light, offset: [0, 0, 0.15], gripper: open}
+  - {at: light, gripper: open}
+  - {at: light, gripper: closed}
+  - {at: light, offset: [0, 0, 0.15], gripper: closed}
+  - {at: z_left, offset: [0, 0, 0.17], gripper: closed}
+  - {at: z_left, offset: [0, 0, 0.03], gripper: closed}
+  - {at: z_left, offset: [0, 0, 0.03], gripper: open}
+  - {at: z_left, offset: [0, 0, 0.17], gripper: open}
+  - {at: medium, offset: [0, 0, 0.15], gripper: open}
+  - {at: medium, gripper: open}
+  - {at: medium, gripper: closed}
+  - {at: medium, offset: [0, 0, 0.15], gripper: closed}
+  - {at: z_mid, offset: [0, 0, 0.17], gripper: closed}
+  - {at: z_mid, offset: [0, 0, 0.03], gripper: closed}
+  - {at: z_mid, offset: [0, 0, 0.03], gripper: open}
+  - {at: z_mid, offset: [0, 0, 0.17], gripper: open}
+  - {at: heavy, offset: [0, 0, 0.15], gripper: open}
+  - {at: heavy, gripper: open}
+  - {at: heavy, gripper: closed}
+  - {at: heavy, offset: [0, 0, 0.15], gripper: closed}
+  - {at: z_right, offset: [0, 0, 0.17], gripper: closed}
+  - {at: z_right, offset: [0, 0, 0.03], gripper: closed}
+  - {at: z_right, offset: [0, 0, 0.03], gripper: open}
+  - {at: z_right, offset: [0, 0, 0.17], gripper: open}
+knobs: {cubes: 3, mass_ratio: 1.5}

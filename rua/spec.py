@@ -35,8 +35,9 @@ class Obj(BaseModel):
     y: tuple[float, float]
     yaw: tuple[float, float] = (0, 0)  # degrees
     z: float = 0.0  # height of the surface it starts on (e.g. a platform's height); 0 = the table
+    pivot: float = 0.05  # seesaw only: hinge height above the table (m); size is the plank [length, width, thickness]
     travel: float = 0.2  # drawer only: how far it slides out (m)
-    damping: float = 2.0  # drawer only: resistance to sliding (N*s/m), a difficulty knob
+    damping: float = 2.0  # drawer: resistance to sliding (N*s/m), a difficulty knob; seesaw: to swinging (N*m*s/rad)
     start: float = 0.0  # drawer only: how far open at reset, as a fraction of travel
     hole: float = 0.04  # hole_block only: side of the square hole (m); minus the peg width = clearance
     only: list[str] | None = None  # exists only in these variants (see TaskSpec.variants); parked out of sight otherwise
@@ -120,6 +121,12 @@ class AtGoal(BaseModel):
     radius: float = 0.03  # each centre within this (xy) of its goal pose, resting on the table
 
 
+class Overhang(BaseModel):
+    object: str
+    platform: str
+    beyond: float  # metres the object's farthest corner reaches past the platform's +x face; released, at rest, above its top
+
+
 class Unmoved(BaseModel):
     objects: list[str]
     tol: float = 0.03  # metres each may end up from where it started
@@ -127,8 +134,8 @@ class Unmoved(BaseModel):
 
 PREDICATES = {"lifted": Lifted, "opened": Opened, "inserted": Inserted, "in_zone": InZone, "closed": Closed,
               "inside": Inside, "stacked": Stacked, "near_offset": NearOffset, "unmoved": Unmoved, "clear": Clear, "tipped": Tipped,
-              "at_goal": AtGoal}
-REFS = ("object", "target", "zone", "container", "anchor", "order", "objects")  # predicate fields naming objects
+              "at_goal": AtGoal, "overhang": Overhang}
+REFS = ("object", "target", "zone", "container", "anchor", "order", "objects", "platform")  # predicate fields naming objects
 
 
 class Step(BaseModel):
@@ -318,6 +325,8 @@ class TaskSpec(BaseModel):
             out[o.name] = {"pos_mm": pos, "held": bool(objects.touching_robot(sim.model, sim.data, o.name))}
             if o.shape in objects.ARTICULATED:
                 out[o.name]["open"] = round(objects.joint_fraction(sim.model, sim.data, o.name)[0], 3)
+            if o.shape == "seesaw":
+                out[o.name]["tilt_deg"] = round(objects.seesaw_tilt(sim.model, sim.data, o.name), 1)
         return out
 
     def is_success(self, sim, answer: str | None = "") -> bool:
@@ -349,6 +358,11 @@ class TaskSpec(BaseModel):
         if kind == "tipped":
             up = sim.data.body(p.object).xmat[8]  # z component of the body's z axis
             return np.degrees(np.arccos(np.clip(up, -1, 1))) >= p.angle and self._released(sim, p.object)
+        if kind == "overhang":  # box corners along the platform's +x, past its face; held up, not fallen
+            plat, size = sim.data.body(p.platform), self.obj(p.platform).size
+            rot, axis = sim.data.body(p.object).xmat.reshape(3, 3), plat.xmat.reshape(3, 3)[:, 0]
+            reach = (pos - plat.xpos) @ axis + np.abs(axis @ rot) @ (np.array(o.size) / 2) - size[0] / 2
+            return reach >= p.beyond and pos[2] > plat.xpos[2] + size[2] and self._released(sim, p.object)
         if kind == "lifted":
             return pos[2] - objects.base_z(o.shape, o.size) > p.height
         if kind in ("opened", "closed"):

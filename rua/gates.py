@@ -147,6 +147,8 @@ def thresholds(task: spec.TaskSpec, kind: str, p) -> list[tuple[str, float, str 
     if kind == "in_zone":  # "entirely inside" only if the drawn circle is exactly radius + object radius
         fits = abs(task.obj(p.zone).size[0] / 2 - task.obj(p.object).size[0] / 2 - p.radius) < 0.005
         return [("radius", p.radius, ENTIRELY_INSIDE if fits else None)]
+    if kind == "overhang":
+        return [("beyond", p.beyond, None)]
     if kind == "near_offset":
         return [("offset", abs(v), None) for v in p.offset if v] + [("radius", p.radius, None)]
     if kind == "at_goal":
