@@ -40,6 +40,10 @@ class Obj(BaseModel):
     start: float = 0.0  # drawer only: how far open at reset, as a fraction of travel
     hole: float = 0.04  # hole_block only: side of the square hole (m); minus the peg width = clearance
     only: list[str] | None = None  # exists only in these variants (see TaskSpec.variants); parked out of sight otherwise
+    # Goal pose for `at_goal` tasks, sampled per seed (separate draw, so start poses don't change).
+    # Unset = the goal is where it starts. The agent sees it as a goal image, never as numbers.
+    goal_x: tuple[float, float] | None = None
+    goal_y: tuple[float, float] | None = None
 
 
     @model_validator(mode="before")
@@ -111,13 +115,19 @@ class Tipped(BaseModel):
     angle: float = 70  # degrees between the object's own up axis and world up, at least; at rest, released
 
 
+class AtGoal(BaseModel):
+    objects: list[str]
+    radius: float = 0.03  # each centre within this (xy) of its goal pose, resting on the table
+
+
 class Unmoved(BaseModel):
     objects: list[str]
     tol: float = 0.03  # metres each may end up from where it started
 
 
 PREDICATES = {"lifted": Lifted, "opened": Opened, "inserted": Inserted, "in_zone": InZone, "closed": Closed,
-              "inside": Inside, "stacked": Stacked, "near_offset": NearOffset, "unmoved": Unmoved, "clear": Clear, "tipped": Tipped}
+              "inside": Inside, "stacked": Stacked, "near_offset": NearOffset, "unmoved": Unmoved, "clear": Clear, "tipped": Tipped,
+              "at_goal": AtGoal}
 REFS = ("object", "target", "zone", "container", "anchor", "order", "objects")  # predicate fields naming objects
 
 
@@ -132,6 +142,7 @@ class Step(BaseModel):
     # Side grasps: world-frame tool (roll, pitch, yaw) in degrees, replacing straight-down + yaw.
     # E.g. [-90, 0, -90] points the fingers along +x, closing vertically; [-135, 0, -90] the same tilted 45 deg down.
     tool: tuple[float, float, float] | None = None
+    goal: bool = False  # aim at the object's goal pose (Obj.goal_x/goal_y) instead of where it starts
 
 
 class Perturb(BaseModel):
@@ -204,9 +215,9 @@ class TaskSpec(BaseModel):
             raise ValueError(f"`only`/`impossible` name variants not in variants: {sorted(names | set(self.impossible))}")
         if self.variants and set(self.variants) <= set(self.impossible):
             raise ValueError("every variant is impossible: add a feasible one")
-        for g in self.shuffle:
-            if len({(by_name[n].shape, tuple(by_name[n].size)) for n in g}) > 1:
-                raise ValueError(f"shuffle group {g} must share shape and size (they swap poses)")
+        for g in self.shuffle:  # same footprint, so a flat decal can stand in for a cube (fake_cubes)
+            if len({tuple(by_name[n].size[:2]) for n in g}) > 1:
+                raise ValueError(f"shuffle group {g} must share a footprint (they swap xy and yaw)")
         return self
 
     def _predicates(self, kind: str) -> list:
@@ -243,8 +254,9 @@ class TaskSpec(BaseModel):
         poses = {o.name: (np.array([rng.uniform(*o.x), rng.uniform(*o.y), objects.base_z(o.shape, o.size) + o.z]),
                           np.radians(rng.uniform(*o.yaw))) for o in self.objects}
         for g in self.shuffle:  # drawn only when used, so existing tasks keep their seeds
-            for name, pose in zip(g, [poses[n] for n in rng.permutation(g)]):
-                poses[name] = pose
+            # xy and yaw swap, height stays each object's own (a decal stays on the table)
+            for name, (pos, yaw) in zip(g, [(poses[n][0].copy(), poses[n][1]) for n in rng.permutation(g)]):
+                poses[name] = (np.array([*pos[:2], poses[name][0][2]]), yaw)
         if self.layout_yaw == (0, 0):  # no extra draw, so existing tasks keep their seeds
             return {n: p for n, p in poses.items() if self.present(self.obj(n), seed)}
         a = np.radians(rng.uniform(*self.layout_yaw))
@@ -255,15 +267,24 @@ class TaskSpec(BaseModel):
             poses[name] = (pos, yaw + a)
         return {n: p for n, p in poses.items() if self.present(self.obj(n), seed)}
 
+    def goals(self, seed: int) -> dict[str, tuple[np.ndarray, float]]:
+        """Object name -> goal (position, yaw) for this seed: the start pose unless goal_x/goal_y are set."""
+        poses, rng = self.sample(seed), np.random.default_rng([seed, 1])  # own stream: start poses unchanged
+        for o in self.objects:
+            if o.goal_x and o.goal_y:
+                poses[o.name] = (np.array([rng.uniform(*o.goal_x), rng.uniform(*o.goal_y), poses[o.name][0][2]]),
+                                 poses[o.name][1])
+        return poses
+
     def plan(self, seed: int) -> list[tuple[np.ndarray, float | tuple, float]]:
         """Oracle waypoints for this seed: (tcp position, tool yaw or (roll, pitch, yaw) radians,
         gripper 1 open / 0 closed). Empty on an impossible variant: the oracle just replies."""
-        poses, out = self.sample(seed), []
+        poses, goals, out = self.sample(seed), self.goals(seed), []
         if not self.feasible(seed):
             return out
         for s in self.oracle:
             name, _, part = s.at.partition(".")
-            o, (pos, yaw) = self.obj(name), poses[name]
+            o, (pos, yaw) = self.obj(name), (goals if s.goal else poses)[name]
             if s.toward:
                 d = poses[s.toward][0] - pos
                 yaw = np.arctan2(d[1], d[0])
@@ -317,6 +338,10 @@ class TaskSpec(BaseModel):
                 if over or sim.body_pos(n)[2] < 0 or not self._released(sim, n):
                     return False
             return True
+        if kind == "at_goal":
+            goals = self.goals(sim.seed)
+            return all(np.linalg.norm(sim.body_pos(n)[:2] - goals[n][0][:2]) < p.radius and self._resting(sim, n)
+                       for n in p.objects)
         if kind == "unmoved":
             start = self.sample(sim.seed)
             return all(np.linalg.norm(sim.body_pos(n) - start[n][0]) < p.tol for n in p.objects)

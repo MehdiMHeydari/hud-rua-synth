@@ -106,6 +106,23 @@ class Sim:
                 self.data.qpos[self.model.joint(f"{o.name}_slide").qposadr[0]] = o.start * o.travel
         mujoco.mj_forward(self.model, self.data)  # refresh poses before reading them
         self.move_to(PARK)  # also lets the objects settle
+        self.goal_image = self._goal_image() if any(o.goal_x for o in self.task.objects) else None
+
+    def _goal_image(self) -> np.ndarray:
+        """Top view of this seed's goal arrangement: the settled scene with objects teleported to their
+        goal poses (same camera, light and parked arm as the live top image), then put back."""
+        qpos = self.data.qpos.copy()
+        for name, (pos, yaw) in self.task.goals(self.seed).items():
+            if not self.model.body(name).jntnum[0]:  # fixed templates have no goal pose
+                continue
+            joint = self.model.body(name).jntadr[0]
+            adr = self.model.jnt_qposadr[joint]
+            self.data.qpos[adr:adr + 7] = [*pos, np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)]
+        mujoco.mj_forward(self.model, self.data)
+        image = self._render("top")
+        self.data.qpos[:] = qpos
+        mujoco.mj_forward(self.model, self.data)
+        return image
 
     def track(self, pos, quat_wxyz, gripper: float, seconds: float) -> None:
         """One control tick: IK toward a TCP pose, set the gripper (1 open, 0 closed), run physics.

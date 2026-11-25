@@ -149,6 +149,8 @@ def thresholds(task: spec.TaskSpec, kind: str, p) -> list[tuple[str, float, str 
         return [("radius", p.radius, ENTIRELY_INSIDE if fits else None)]
     if kind == "near_offset":
         return [("offset", abs(v), None) for v in p.offset if v] + [("radius", p.radius, None)]
+    if kind == "at_goal":
+        return [("radius", p.radius, None)]
     return []
 
 

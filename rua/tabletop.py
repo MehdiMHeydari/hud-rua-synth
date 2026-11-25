@@ -67,7 +67,9 @@ class TabletopEnv(gym.Env):
         # Rounded to 1 mm / 0.001: contact jitter while squeezing an object otherwise stays above
         # DirectControl's "stopped moving" threshold (1e-4), so every grasp ran to the 20 s timeout.
         state = np.round([*o["tcp_pos"], x, y, z, w, o["gripper_opening"]], 3).astype(np.float32)
-        return {**o["images"], "state": state}
+        # A goal image (at_goal tasks) rides along with every observation; env.py shows it to the agent.
+        goal = {} if self.sim.goal_image is None else {"goal": self.sim.goal_image}
+        return {**o["images"], **goal, "state": state}
 
 
 def make_env(task: str = "lift_cube") -> TabletopEnv:

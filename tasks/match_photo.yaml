@@ -1,0 +1,43 @@
+name: match_photo
+prompt: >-
+  Four objects start resting on the table: a red cube, a blue cube, a yellow cube (all 5 cm) and a green
+  cylinder. Every move result also returns a goal image: the same top camera view, with the arm parked,
+  showing how the table should look when you are done. Rearrange the objects to match it: each object's
+  centre must end within 3 cm of where that object is in the goal image, resting on the table and released.
+  Some objects may already be where the goal image shows them.
+objects:
+  - {name: red, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.33, 0.40], y: [0.22, 0.28], goal_x: [0.62, 0.70], goal_y: [-0.22, -0.12]}
+  - {name: yellow, shape: box, size: [0.05, 0.05, 0.05], color: yellow, x: [0.33, 0.40], y: [0.06, 0.12], goal_x: [0.50, 0.56], goal_y: [-0.04, 0.04]}
+  - {name: green, shape: cylinder, size: [0.05, 0.05], color: green, x: [0.33, 0.40], y: [-0.12, -0.06]}
+  - {name: blue, shape: box, size: [0.05, 0.05, 0.05], color: blue, x: [0.33, 0.40], y: [-0.28, -0.22], goal_x: [0.62, 0.70], goal_y: [0.12, 0.22]}
+# Goal poses come from their own per-seed draw; green has none, so its goal is where it starts (a
+# "no change" the agent must notice and leave alone). Start and goal regions are disjoint, so any
+# move order works for the oracle.
+success:
+  at_goal: {objects: [red, yellow, green, blue], radius: 0.03}
+oracle:
+  - {at: red, offset: [0, 0, 0.15], gripper: open}
+  - {at: red, gripper: open}
+  - {at: red, gripper: closed}
+  - {at: red, offset: [0, 0, 0.15], gripper: closed}
+  - {at: red, goal: true, offset: [0, 0, 0.15], gripper: closed}
+  - {at: red, goal: true, offset: [0, 0, 0.005], gripper: closed}
+  - {at: red, goal: true, offset: [0, 0, 0.005], gripper: open}
+  - {at: red, goal: true, offset: [0, 0, 0.15], gripper: open}
+  - {at: blue, offset: [0, 0, 0.15], gripper: open}
+  - {at: blue, gripper: open}
+  - {at: blue, gripper: closed}
+  - {at: blue, offset: [0, 0, 0.15], gripper: closed}
+  - {at: blue, goal: true, offset: [0, 0, 0.15], gripper: closed}
+  - {at: blue, goal: true, offset: [0, 0, 0.005], gripper: closed}
+  - {at: blue, goal: true, offset: [0, 0, 0.005], gripper: open}
+  - {at: blue, goal: true, offset: [0, 0, 0.15], gripper: open}
+  - {at: yellow, offset: [0, 0, 0.15], gripper: open}
+  - {at: yellow, gripper: open}
+  - {at: yellow, gripper: closed}
+  - {at: yellow, offset: [0, 0, 0.15], gripper: closed}
+  - {at: yellow, goal: true, offset: [0, 0, 0.15], gripper: closed}
+  - {at: yellow, goal: true, offset: [0, 0, 0.005], gripper: closed}
+  - {at: yellow, goal: true, offset: [0, 0, 0.005], gripper: open}
+  - {at: yellow, goal: true, offset: [0, 0, 0.15], gripper: open}
+knobs: {objects: 4, moved: 3, radius: 0.03}

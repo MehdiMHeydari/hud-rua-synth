@@ -16,12 +16,15 @@ rua/spec.py (it can miss objects or mislabel them), drop "no match" objects, the
   predicates treat it like a box of the card size. Use `graspable`/`hollow` from the card: only graspable
   ones can be picked, only hollow ones can be an `inside` container (centre within the rim, bottom below it).
 - Success predicates (all must hold, graded on the final state): lifted, opened, closed, inserted,
-  in_zone, inside, stacked, near_offset, unmoved, clear (no listed object's centre over a zone, all at rest on the table), tipped (tilted >= `angle` deg).
+  in_zone, inside, stacked, near_offset, unmoved, clear (no listed object's centre over a zone, all at rest on the table), tipped (tilted >= `angle` deg),
+  at_goal (each centre within `radius` of its goal pose, resting; the agent sees the goals only as a goal image).
 - `z` on an object: height of the surface it starts on (e.g. on a platform); offsets are from its centre.
 - Placement: `x`, `y`, `yaw` ranges, sampled per seed. Keep everything reachable (x 0.3-0.8 at table height)
   and >= 5 cm inside the top camera's view (roughly x 0.0-1.0, y +-0.6; the `visible` gate checks).
   `layout_yaw: [lo, hi]` rotates the whole layout per seed so relations aren't always on the same side.
-  `shuffle: [[a, b, c]]` swaps the poses of same-shaped objects per seed, so a hidden property (mass,
+  `goal_x`/`goal_y` ranges on an object give it a per-seed goal pose (unset = where it starts); the goal image
+  (top view of the goal arrangement) is returned with every move. Oracle steps reach it with `goal: true`.
+  `shuffle: [[a, b, c]]` swaps the xy and yaw of same-footprint objects per seed (a red `zone` decal can stand in for a cube), so a hidden property (mass,
   a locked drawer) moves around; success and oracle name the object, so they follow it.
 - `variants: [ok, blocked, ...]` (seed s plays variants[s % len]) + `impossible: [blocked]` + `only: [...]` on objects:
   an impossible variant is graded on the reply containing IMPOSSIBLE (the prompt must ask for it); a feasible one fails if it does.

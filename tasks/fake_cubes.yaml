@@ -1,0 +1,20 @@
+name: fake_cubes
+prompt: >-
+  There are three red 5 cm squares on the table that look alike from above. Exactly one of them is a
+  real 5 cm cube; the other two are flat red squares painted on the table, which cannot be picked up.
+  Pick up the real cube and finish holding it with its bottom at least 10 cm above the table.
+objects:
+  - {name: cube, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.40, 0.55], y: [0.15, 0.22], yaw: [-30, 30]}
+  - {name: fake_a, shape: zone, size: [0.05, 0.05], color: red, x: [0.40, 0.55], y: [-0.03, 0.03], yaw: [-30, 30]}
+  - {name: fake_b, shape: zone, size: [0.05, 0.05], color: red, x: [0.40, 0.55], y: [-0.22, -0.15], yaw: [-30, 30]}
+# Decals are 1 mm paint (zone: seen, never touched), so the fingers close through one and the grasp
+# line honestly says "fingers met; nothing between them". Which spot is real changes per seed.
+shuffle: [[cube, fake_a, fake_b]]
+success:
+  lifted: {object: cube, height: 0.10}
+oracle:
+  - {at: cube, offset: [0, 0, 0.15], gripper: open}
+  - {at: cube, gripper: open}
+  - {at: cube, gripper: closed}
+  - {at: cube, offset: [0, 0, 0.16], gripper: closed}
+knobs: {decoys: 2, decal_height_mm: 1}

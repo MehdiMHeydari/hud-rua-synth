@@ -4,10 +4,11 @@
 """
 
 import numpy as np
-from mcp.types import TextContent
+from mcp.types import ImageContent, TextContent
 
 from hud.environment import Environment
 from hud.environment.robot import DirectControl
+from hud.environment.robot.control import _png
 import spec
 from tabletop import CAMERAS, DIMS, FPS, TabletopBridge, make_env
 
@@ -45,6 +46,10 @@ class GraspControl(DirectControl):
         extra = "\n".join(line for line in lines if line)
         if extra:
             content[0] = TextContent(type="text", text=f"{content[0].text}\n{extra}")
+        if "goal" in obs["data"]:  # at_goal tasks: the target arrangement, outside the contract (per task, not per launch)
+            frame = np.asarray(obs["data"]["goal"])
+            content += [TextContent(type="text", text="goal image (top camera, the arrangement to match):"),
+                        ImageContent(type="image", data=_png(frame.reshape(frame.shape[-3:])), mimeType="image/png")]
         return content
 
 
