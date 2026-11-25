@@ -22,14 +22,17 @@ COLORS = {"red": [0.8, 0.1, 0.1, 1], "green": [0.1, 0.6, 0.2, 1], "blue": [0.1, 
 class Obj(BaseModel):
     name: str
     shape: Literal[objects.PRIMITIVES + objects.COMPOUND + objects.ARTICULATED + objects.FIXED + objects.ASSET]
-    size: list[float]  # metres, full lengths. box/drawer/hole_block: [x, y, z]; cylinder: [diameter, height]; sphere/zone: [diameter]
+    size: list[float]  # metres, full lengths. box/drawer/hole_block/platform: [x, y, z]; cylinder: [diameter, height]; sphere: [diameter]
+    # zone: [diameter] (circle) or [x, y] (rectangle)
     # hook: [handle length, crossbar length, thickness]; asset: filled from its catalog card (bbox), never set
     color: Literal[tuple(COLORS)] | None = None  # required except for assets (textured)
     mass: float = 0.1  # asset: defaults to its card's mass
+    friction: float = 1.0  # primitives only (MuJoCo uses the larger of two touching geoms', so it also sets grip)
     asset: str | None = None  # asset only: a catalog id (assets/catalog.yaml)
     x: tuple[float, float]  # placement range on the table, sampled per seed
     y: tuple[float, float]
     yaw: tuple[float, float] = (0, 0)  # degrees
+    z: float = 0.0  # height of the surface it starts on (e.g. a platform's height); 0 = the table
     travel: float = 0.2  # drawer only: how far it slides out (m)
     damping: float = 2.0  # drawer only: resistance to sliding (N*s/m), a difficulty knob
     start: float = 0.0  # drawer only: how far open at reset, as a fraction of travel
@@ -95,13 +98,23 @@ class NearOffset(BaseModel):
     radius: float = 0.03  # object centre within this of anchor + offset, resting on the table
 
 
+class Clear(BaseModel):
+    zone: str
+    objects: list[str]  # none of these has its centre over the zone's marking; all at rest on the table
+
+
+class Tipped(BaseModel):
+    object: str
+    angle: float = 70  # degrees between the object's own up axis and world up, at least; at rest, released
+
+
 class Unmoved(BaseModel):
     objects: list[str]
     tol: float = 0.03  # metres each may end up from where it started
 
 
 PREDICATES = {"lifted": Lifted, "opened": Opened, "inserted": Inserted, "in_zone": InZone, "closed": Closed,
-              "inside": Inside, "stacked": Stacked, "near_offset": NearOffset, "unmoved": Unmoved}
+              "inside": Inside, "stacked": Stacked, "near_offset": NearOffset, "unmoved": Unmoved, "clear": Clear, "tipped": Tipped}
 REFS = ("object", "target", "zone", "container", "anchor", "order", "objects")  # predicate fields naming objects
 
 
@@ -113,6 +126,16 @@ class Step(BaseModel):
     yaw: float = 0  # degrees added to the object's yaw
     toward: str | None = None  # pushes: offset x points from the object toward this one (replaces its yaw)
     gripper: Literal["open", "closed"]
+    # Side grasps: world-frame tool (roll, pitch, yaw) in degrees, replacing straight-down + yaw.
+    # E.g. [-90, 0, -90] points the fingers along +x, closing vertically; [-135, 0, -90] the same tilted 45 deg down.
+    tool: tuple[float, float, float] | None = None
+
+
+class Perturb(BaseModel):
+    """An unannounced change: the first time the task is solved, `object` is moved by `offset`
+    (world xy, m) once. Tests whether the agent checks the final state instead of assuming it holds."""
+    object: str
+    offset: tuple[float, float]
 
 
 class TaskSpec(BaseModel):
@@ -125,6 +148,10 @@ class TaskSpec(BaseModel):
     # Rotate the whole layout (positions and yaws) about its centre by a per-seed angle, degrees.
     # Per-object ranges alone keep relations (target always on the same side) fixed across seeds.
     layout_yaw: tuple[float, float] = (0, 0)
+    # Groups of same-shaped objects that swap poses per seed, so a hidden property (mass, a locked
+    # drawer) is never at the same spot; success and oracle name the object, so they follow it.
+    shuffle: list[list[str]] = []
+    perturb: Perturb | None = None
     knobs: dict[str, float | str] = {}
     # Success thresholds deliberately not stated in the prompt, "kind.field" -> why (the `prompt` gate
     # requires every other one to be stated: OpenRUA traced 79/413 failures to unstated thresholds).
@@ -157,10 +184,16 @@ class TaskSpec(BaseModel):
                 raise ValueError(f"oracle step references unknown object {obj!r} / {s.toward!r}")
             objects.part_offset(by_name[obj].shape, by_name[obj].size, part or None)  # raises if no such part
         for p in (q for ps in self.success.values() for q in (ps if isinstance(ps, list) else [ps])):
-            for field, ref in p:
+            for field, ref in p:  # (shuffle/perturb names are checked below)
                 for r in ([ref] if isinstance(ref, str) else ref) if field in REFS else ():
                     if r not in by_name:
                         raise ValueError(f"success references unknown object {r!r}")
+        for name in [n for g in self.shuffle for n in g] + ([self.perturb.object] if self.perturb else []):
+            if name not in by_name:
+                raise ValueError(f"shuffle/perturb references unknown object {name!r}")
+        for g in self.shuffle:
+            if len({(by_name[n].shape, tuple(by_name[n].size)) for n in g}) > 1:
+                raise ValueError(f"shuffle group {g} must share shape and size (they swap poses)")
         return self
 
     def _predicates(self, kind: str) -> list:
@@ -173,8 +206,11 @@ class TaskSpec(BaseModel):
     def sample(self, seed: int) -> dict[str, tuple[np.ndarray, float]]:
         """Object name -> (origin position, yaw radians) for this seed. Deterministic."""
         rng = np.random.default_rng(seed)
-        poses = {o.name: (np.array([rng.uniform(*o.x), rng.uniform(*o.y), objects.base_z(o.shape, o.size)]),
+        poses = {o.name: (np.array([rng.uniform(*o.x), rng.uniform(*o.y), objects.base_z(o.shape, o.size) + o.z]),
                           np.radians(rng.uniform(*o.yaw))) for o in self.objects}
+        for g in self.shuffle:  # drawn only when used, so existing tasks keep their seeds
+            for name, pose in zip(g, [poses[n] for n in rng.permutation(g)]):
+                poses[name] = pose
         if self.layout_yaw == (0, 0):  # no extra draw, so existing tasks keep their seeds
             return poses
         a = np.radians(rng.uniform(*self.layout_yaw))
@@ -185,8 +221,9 @@ class TaskSpec(BaseModel):
             poses[name] = (pos, yaw + a)
         return poses
 
-    def plan(self, seed: int) -> list[tuple[np.ndarray, float, float]]:
-        """Oracle waypoints for this seed: (tcp position, tool yaw, gripper 1 open / 0 closed)."""
+    def plan(self, seed: int) -> list[tuple[np.ndarray, float | tuple, float]]:
+        """Oracle waypoints for this seed: (tcp position, tool yaw or (roll, pitch, yaw) radians,
+        gripper 1 open / 0 closed)."""
         poses, out = self.sample(seed), []
         for s in self.oracle:
             name, _, part = s.at.partition(".")
@@ -198,6 +235,8 @@ class TaskSpec(BaseModel):
             local = objects.part_offset(o.shape, o.size, part or None) + s.offset
             world = pos + [c * local[0] - si * local[1], si * local[0] + c * local[1], local[2]]
             tool_yaw = (yaw + np.radians(s.yaw) + np.pi) % (2 * np.pi) - np.pi  # the tool takes [-pi, pi]
+            if s.tool:
+                tool_yaw = tuple(np.radians(s.tool))
             out.append((world, tool_yaw, float(s.gripper == "open")))
         return out
 
@@ -227,10 +266,22 @@ class TaskSpec(BaseModel):
                      abs(sim.body_pos(b)[2] - sim.body_pos(a)[2] - self.obj(a).size[2]) < 0.01
                      for a, b in zip(p.order, p.order[1:]))
             return on and self._resting(sim, p.order[0]) and all(self._released(sim, n) for n in p.order)
+        if kind == "clear":  # centres off the marking (circle or rectangle, in the zone's frame), on the table
+            z, zone = sim.data.body(p.zone), self.obj(p.zone)
+            half = np.array(zone.size[:2]) / 2
+            for n in p.objects:
+                local = (z.xmat.reshape(3, 3).T @ (sim.body_pos(n) - z.xpos))[:2]
+                over = np.linalg.norm(local) < half[0] if len(zone.size) == 1 else all(abs(local) < half)
+                if over or sim.body_pos(n)[2] < 0 or not self._released(sim, n):
+                    return False
+            return True
         if kind == "unmoved":
             start = self.sample(sim.seed)
             return all(np.linalg.norm(sim.body_pos(n) - start[n][0]) < p.tol for n in p.objects)
         o, pos = self.obj(p.object), sim.body_pos(p.object)
+        if kind == "tipped":
+            up = sim.data.body(p.object).xmat[8]  # z component of the body's z axis
+            return np.degrees(np.arccos(np.clip(up, -1, 1))) >= p.angle and self._released(sim, p.object)
         if kind == "lifted":
             return pos[2] - objects.base_z(o.shape, o.size) > p.height
         if kind in ("opened", "closed"):

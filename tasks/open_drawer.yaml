@@ -9,6 +9,6 @@ oracle:
   - {at: cabinet.handle, offset: [0, 0, 0.10], gripper: open}
   - {at: cabinet.handle, gripper: open}
   - {at: cabinet.handle, gripper: closed}
-  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: closed}
-  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: open}
+  - {at: cabinet.handle, offset: [-0.20, 0, 0], gripper: closed}  # past full travel: the end stop holds it
+  - {at: cabinet.handle, offset: [-0.20, 0, 0], gripper: open}
 knobs: {damping: 2.0}

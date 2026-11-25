@@ -18,9 +18,9 @@ oracle:
   - {at: cabinet.handle, offset: [0, 0, 0.10], gripper: open}
   - {at: cabinet.handle, gripper: open}
   - {at: cabinet.handle, gripper: closed}
-  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: closed}
-  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: open}
-  - {at: cabinet.handle, offset: [-0.18, 0, 0.10], gripper: open}
+  - {at: cabinet.handle, offset: [-0.20, 0, 0], gripper: closed}  # past full travel (drawer friction): the end stop holds it
+  - {at: cabinet.handle, offset: [-0.20, 0, 0], gripper: open}
+  - {at: cabinet.handle, offset: [-0.20, 0, 0.10], gripper: open}
   - {at: block, offset: [0, 0, 0.15], gripper: open}
   - {at: block, gripper: open}
   - {at: block, gripper: closed}
@@ -37,11 +37,10 @@ oracle:
   - {at: cabinet, offset: [-0.22, 0.055, 0.045], gripper: closed}
   - {at: cabinet, offset: [-0.22, 0.055, 0.045], gripper: open}
   - {at: cabinet, offset: [-0.22, 0.055, 0.20], gripper: open}
-  - {at: cabinet.handle, offset: [-0.18, 0, 0.10], gripper: open}
-  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: open}
-  - {at: cabinet.handle, offset: [-0.18, 0, 0], gripper: closed}
-  - {at: cabinet.handle, gripper: closed}
-  - {at: cabinet.handle, gripper: open}
-  - {at: cabinet.handle, offset: [0, 0, 0.10], gripper: open}
+  # close by pushing the tab's end with closed fingers (gripping the tab slips ~1 cm against drawer friction)
+  - {at: cabinet.handle, offset: [-0.26, 0, 0.10], gripper: closed}
+  - {at: cabinet.handle, offset: [-0.26, 0, 0], gripper: closed}
+  - {at: cabinet.handle, offset: [-0.02, 0, 0], gripper: closed}
+  - {at: cabinet.handle, offset: [-0.02, 0, 0.10], gripper: closed}
 hidden: {closed.fraction: "'close the drawer' means shut; 5% (9 mm of 18 cm travel) only absorbs settling. Calibrated prompt, not reworded."}
 knobs: {start_open: 0.0, blocks: 2}

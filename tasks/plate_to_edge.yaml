@@ -1,0 +1,29 @@
+name: plate_to_edge
+prompt: >-
+  A thin blue plate (16 x 16 x 1 cm) lies flat on top of a white ledge 16 cm high. It is too wide to
+  grasp from above. Get it into the gripper and hold it up so its bottom is at least 26 cm above the
+  table (10 cm above the ledge top).
+objects:
+  # The table's own edges are out of reach and out of view (y = +-0.8, x = 1.15), so the overhang is made
+  # on a fixed ledge. 16 cm high: the arm can't hold the fingers horizontal near table height (8-17 cm
+  # short below z 0.12 at x 0.35-0.45) but reaches z 0.16+ at x 0.45-0.65.
+  - {name: ledge, shape: platform, size: [0.20, 0.30, 0.16], color: white, x: [0.61, 0.62], y: [-0.02, 0.02]}
+  - {name: plate, shape: box, size: [0.16, 0.16, 0.01], color: blue, mass: 0.2, z: 0.16, x: [0.60, 0.63], y: [-0.03, 0.03]}
+success:
+  lifted: {object: plate, height: 0.26}
+# Slide it toward the robot with closed fingers on its far edge until 6 cm overhang the ledge's near
+# edge, then pinch the overhang with the fingers pointing forward and 45 deg down (closing across the
+# plate's thickness) and lift straight up. Horizontal fingers (tool [-90, 0, -90]) left IK stuck ~11 cm
+# short on most seeds; 45 deg down reached on 8/8.
+oracle:
+  - {at: plate, offset: [0.11, 0, 0.09], gripper: closed}
+  - {at: plate, offset: [0.11, 0, 0.003], gripper: closed}
+  - {at: ledge, offset: [0.008, 0, 0.168], gripper: closed}
+  - {at: ledge, offset: [0.008, 0, 0.26], gripper: closed}
+  - {at: ledge, offset: [-0.21, 0, 0.25], tool: [-135, 0, -90], gripper: open}
+  - {at: ledge, offset: [-0.21, 0, 0.165], tool: [-135, 0, -90], gripper: open}
+  - {at: ledge, offset: [-0.13, 0, 0.165], tool: [-135, 0, -90], gripper: open}
+  - {at: ledge, offset: [-0.13, 0, 0.165], tool: [-135, 0, -90], gripper: closed}
+  - {at: ledge, offset: [-0.13, 0, 0.30], tool: [-135, 0, -90], gripper: closed}
+  - {at: ledge, offset: [-0.13, 0, 0.40], tool: [-135, 0, -90], gripper: closed}
+knobs: {plate_cm: 16, ledge_height_cm: 16}

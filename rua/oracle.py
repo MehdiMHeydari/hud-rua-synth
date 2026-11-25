@@ -11,10 +11,10 @@ from hud.agents.base import Agent
 from hud.eval.run import Run
 
 
-def move_args(pos, yaw: float, gripper: float) -> dict:
-    """move_to arguments for a straight-down gripper at pos with the given yaw."""
+def move_args(pos, yaw: float | tuple, gripper: float) -> dict:
+    """move_to arguments for a straight-down gripper at pos with the given yaw, or a (roll, pitch, yaw) tuple."""
     names = ["tcp.y", "tcp.z", "tcp.roll", "tcp.pitch", "tcp.yaw", "gripper"]
-    values = [pos[1], pos[2], np.pi, 0.0, yaw, gripper]
+    values = [pos[1], pos[2], *(yaw if isinstance(yaw, tuple) else (np.pi, 0.0, yaw)), gripper]
     return {"target": {"name": "tcp.x", "value": float(pos[0])},
             "others": [{"name": n, "value": float(v)} for n, v in zip(names, values)],
             "note": "oracle"}

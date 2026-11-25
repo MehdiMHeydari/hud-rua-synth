@@ -1,0 +1,32 @@
+name: world_changes
+prompt: >-
+  Put the blue block entirely inside the green circle. The block must still be inside the circle,
+  released and at rest, when you finish.
+objects:
+  - {name: block, shape: box, size: [0.04, 0.04, 0.04], color: blue, x: [0.38, 0.44], y: [0.15, 0.25]}
+  - {name: goal, shape: zone, size: [0.12], color: green, x: [0.60, 0.66], y: [-0.25, -0.05]}
+success:
+  in_zone: {object: block, zone: goal, radius: 0.04}
+# The first time the block is released in the circle, it is moved 15 cm to the robot's left, once,
+# unannounced. Only an agent that looks at the scene after "done" notices it's no longer solved.
+perturb: {object: block, offset: [0.0, 0.15]}
+# Open-loop, so it places twice: once (knocked away on release), then again from where it lands
+# (goal + offset; the first drop's ~1 cm error is well inside the 8 cm finger opening).
+oracle:
+  - {at: block, offset: [0, 0, 0.15], gripper: open}
+  - {at: block, gripper: open}
+  - {at: block, gripper: closed}
+  - {at: block, offset: [0, 0, 0.15], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.15], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.025], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.025], gripper: open}
+  - {at: goal, offset: [0, 0, 0.15], gripper: open}
+  - {at: goal, offset: [0, 0.15, 0.15], gripper: open}
+  - {at: goal, offset: [0, 0.15, 0.02], gripper: open}
+  - {at: goal, offset: [0, 0.15, 0.02], gripper: closed}
+  - {at: goal, offset: [0, 0.15, 0.15], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.15], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.025], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.025], gripper: open}
+  - {at: goal, offset: [0, 0, 0.15], gripper: open}
+knobs: {perturbations: 1, offset_cm: 15}

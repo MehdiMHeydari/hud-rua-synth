@@ -49,7 +49,8 @@ def build_spec(task: TaskSpec) -> mujoco.MjSpec:
     w.add_geom(name="table", type=mujoco.mjtGeom.mjGEOM_BOX, size=[0.7, 0.8, 0.375],
                pos=[0.45, 0, TABLE_Z - 0.375], rgba=[0.6, 0.45, 0.3, 1])
     for o in task.objects:  # placed per seed in Sim.reset
-        objects.add(spec, o.name, o.shape, o.size, COLORS.get(o.color), o.mass, o.travel, o.damping, o.hole, o.asset)
+        objects.add(spec, o.name, o.shape, o.size, COLORS.get(o.color), o.mass, o.travel, o.damping, o.hole, o.asset,
+                    o.friction)
     # Over the robot's left shoulder: roughly image up = robot forward, image left = robot
     # left (no accidental mirroring), offset sideways so the arm doesn't hide the workspace.
     w.add_camera(name="shoulder", pos=[-0.3, 0.45, 1.2], xyaxes=look_at([-0.3, 0.45, 1.2], [0.5, 0, 0]), fovy=60)
@@ -59,9 +60,10 @@ def build_spec(task: TaskSpec) -> mujoco.MjSpec:
     return spec
 
 
-def down_quat(yaw: float) -> list[float]:
-    """wxyz for a straight-down gripper, via HUD's roll/pitch/yaw conversion (what the agent sends)."""
-    x, y, z, w = euler_to_xyzw(np.pi, 0.0, yaw)
+def down_quat(yaw: float | tuple) -> list[float]:
+    """wxyz for a straight-down gripper with this yaw, or for a (roll, pitch, yaw) tuple, via HUD's
+    roll/pitch/yaw conversion (what the agent sends)."""
+    x, y, z, w = euler_to_xyzw(*(yaw if isinstance(yaw, tuple) else (np.pi, 0.0, yaw)))
     return [w, x, y, z]
 
 
@@ -87,6 +89,7 @@ class Sim:
     def reset(self, seed: int) -> None:
         """Arm to the parked pose, objects to this seed's sampled poses, then let everything settle."""
         self.seed = seed  # success checks may compare against the start poses
+        self.perturbed = False
         mujoco.mj_resetDataKeyframe(self.model, self.data, 0)  # Menagerie "home"
         for name, (pos, yaw) in self.task.sample(seed).items():
             body, quat = self.model.body(name), [np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)]
@@ -111,12 +114,24 @@ class Sim:
         self.data.ctrl[:7] = self._solve_ik(target)
         self.data.ctrl[7] = OPEN * float(np.clip(gripper, 0, 1))
         self._run(seconds)
+        if self.task.perturb and not self.perturbed and self.task.is_success(self):
+            self._perturb()
 
-    def move_to(self, pos, yaw: float | None = None, gripper: float = 1.0) -> float:
+    def _perturb(self) -> None:
+        """The spec's one unannounced change: move the object by the offset, at rest. Here, not in the
+        gym env, so the free gates and the oracle through the tool see the same world."""
+        self.perturbed = True
+        joint = self.model.body(self.task.perturb.object).jntadr[0]
+        adr, dof = self.model.jnt_qposadr[joint], self.model.jnt_dofadr[joint]
+        self.data.qpos[adr:adr + 2] += self.task.perturb.offset
+        self.data.qvel[dof:dof + 6] = 0
+        mujoco.mj_forward(self.model, self.data)
+
+    def move_to(self, pos, yaw: float | tuple | None = None, gripper: float = 1.0) -> float:
         """Scripted move for tests and oracles: interpolate, then settle. Returns end error in m.
 
-        yaw: gripper straight down with this tool yaw (same convention the agent's tool uses);
-        None keeps the current hand orientation.
+        yaw: gripper straight down with this tool yaw (same convention the agent's tool uses), or a
+        (roll, pitch, yaw) tuple; None keeps the current hand orientation.
         """
         start = self.data.site_xpos[self.tcp].copy()
         current = mink.SO3.from_matrix(self.data.site_xmat[self.tcp].reshape(3, 3))

@@ -1,0 +1,57 @@
+name: make_room
+prompt: >-
+  Clear the white rectangle (30 cm along x by 24 cm along y) so that no object's centre is over it.
+  Put the objects anywhere else on the table, released and standing at rest; none may fall off the table.
+objects:
+  - {name: area, shape: zone, size: [0.30, 0.24], color: white, x: [0.55, 0.55], y: [0, 0]}
+  - {name: cube, shape: box, size: [0.05, 0.05, 0.05], color: red, x: [0.46, 0.48], y: [0.07, 0.09]}
+  - {name: can, shape: cylinder, size: [0.04, 0.08], color: blue, x: [0.46, 0.48], y: [-0.08, -0.06]}
+  - {name: bottle, shape: asset, asset: pill_bottle, x: [0.55, 0.56], y: [-0.005, 0.01]}
+  - {name: crayons, shape: asset, asset: crayon_box, x: [0.62, 0.64], y: [0.07, 0.09]}
+  - {name: rhino, shape: asset, asset: toy_rhino, x: [0.62, 0.64], y: [-0.08, -0.06]}
+success:
+  clear: {zone: area, objects: [cube, can, bottle, crayons, rhino]}
+# One pick-and-place per object to its own spot beside the rectangle (offsets from its centre).
+# The rhino is 3.9 cm along x, so the fingers close along x (yaw 90).
+oracle:
+  - {at: cube, offset: [0, 0, 0.15], gripper: open}
+  - {at: cube, gripper: open}
+  - {at: cube, gripper: closed}
+  - {at: cube, offset: [0, 0, 0.15], gripper: closed}
+  - {at: area, offset: [-0.12, 0.27, 0.15], gripper: closed}
+  - {at: area, offset: [-0.12, 0.27, 0.03], gripper: closed}
+  - {at: area, offset: [-0.12, 0.27, 0.03], gripper: open}
+  - {at: area, offset: [-0.12, 0.27, 0.15], gripper: open}
+  - {at: can, offset: [0, 0, 0.15], gripper: open}
+  - {at: can, gripper: open}
+  - {at: can, gripper: closed}
+  - {at: can, offset: [0, 0, 0.15], gripper: closed}
+  - {at: area, offset: [-0.12, -0.27, 0.15], gripper: closed}
+  - {at: area, offset: [-0.12, -0.27, 0.045], gripper: closed}
+  - {at: area, offset: [-0.12, -0.27, 0.045], gripper: open}
+  - {at: area, offset: [-0.12, -0.27, 0.15], gripper: open}
+  - {at: bottle, offset: [0, 0, 0.15], gripper: open}
+  - {at: bottle, gripper: open}
+  - {at: bottle, gripper: closed}
+  - {at: bottle, offset: [0, 0, 0.15], gripper: closed}
+  - {at: area, offset: [0.05, 0.27, 0.18], gripper: closed}
+  - {at: area, offset: [0.05, 0.27, 0.055], gripper: closed}
+  - {at: area, offset: [0.05, 0.27, 0.055], gripper: open}
+  - {at: area, offset: [0.05, 0.27, 0.18], gripper: open}
+  - {at: crayons, offset: [0, 0, 0.15], gripper: open}
+  - {at: crayons, gripper: open}
+  - {at: crayons, gripper: closed}
+  - {at: crayons, offset: [0, 0, 0.15], gripper: closed}
+  - {at: area, offset: [0.05, -0.27, 0.18], gripper: closed}
+  - {at: area, offset: [0.05, -0.27, 0.065], gripper: closed}
+  - {at: area, offset: [0.05, -0.27, 0.065], gripper: open}
+  - {at: area, offset: [0.05, -0.27, 0.18], gripper: open}
+  - {at: rhino, offset: [0, 0, 0.15], yaw: 90, gripper: open}
+  - {at: rhino, yaw: 90, gripper: open}
+  - {at: rhino, yaw: 90, gripper: closed}
+  - {at: rhino, offset: [0, 0, 0.15], yaw: 90, gripper: closed}
+  - {at: area, offset: [0.21, 0, 0.15], yaw: 90, gripper: closed}
+  - {at: area, offset: [0.21, 0, 0.035], yaw: 90, gripper: closed}
+  - {at: area, offset: [0.21, 0, 0.035], yaw: 90, gripper: open}
+  - {at: area, offset: [0.21, 0, 0.15], yaw: 90, gripper: open}
+knobs: {objects: 5, area_cm: "30x24"}

@@ -4,7 +4,7 @@
     EPISODES=20 CONCURRENCY=5 HUD_LLM_MODEL=gpt-6-sol python rua/run.py
     HUD_LLM_MODEL=oracle python rua/run.py                       # scripted solver, no LLM cost
 
-Settings (all recorded in the job name): STEPS (40), EFFORT (medium), CAMERAS (top,wrist).
+Settings (all recorded in the job name): STEPS (40), EFFORT (medium), CAMERAS (top,wrist), IMAGE (256 px).
 SEED0 (0) offsets the seeds, so confirmation runs can use fresh object placements.
 Every run is appended to runs/log.jsonl with its settings, result, job id and estimated cost
 (exact per-trace cost is on hud.ai; the SDK doesn't expose it).
@@ -17,6 +17,7 @@ import json
 import math
 import os
 import time
+from collections import Counter
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -33,6 +34,7 @@ EFFORT = os.environ.get("EFFORT", "medium")  # reasoning effort swings scores a 
 EPISODES = int(os.environ.get("EPISODES", "1"))
 SEED0 = int(os.environ.get("SEED0", "0"))
 CONCURRENCY = int(os.environ.get("CONCURRENCY", "1"))
+IMAGE = int(os.environ.get("IMAGE", "256"))  # read by tabletop.py; here only to record it
 
 SYSTEM_PROMPT = (
     "You control a Franka Panda robot arm on a table through the move_to tool. Each call moves "
@@ -51,7 +53,7 @@ async def main() -> None:
     else:
         agent = create_agent(MODEL, system_prompt=SYSTEM_PROMPT, max_steps=STEPS, reasoning={"effort": EFFORT})
     runtime = SubprocessRuntime(Path(__file__).with_name("env.py"))
-    name = f"{MODEL} x {TASK} | effort={EFFORT} steps={STEPS} cams={os.environ.get('CAMERAS', 'top,wrist')}"
+    name = f"{MODEL} x {TASK} | effort={EFFORT} steps={STEPS} cams={os.environ.get('CAMERAS', 'top,wrist')} img={IMAGE}"
     job = await Taskset(name, tasks).run(agent, runtime=runtime, max_concurrent=CONCURRENCY)
     for run in job.runs:
         print(f"reward={run.reward} trace={run.trace_id}")
@@ -59,21 +61,27 @@ async def main() -> None:
     k, n = sum((r.reward or 0) >= 1 for r in job.runs), len(job.runs)
     errors = sum(bool(r.trace.is_error) for r in job.runs)  # crashed rollouts are not model failures
     # Episodes that used the whole step budget: a high count means "needs more steps", not "can't do it".
-    capped = sum(len(r.trace.steps) >= STEPS for r in job.runs if (r.reward or 0) < 1)
+    # (Counted from the stop reason: trace.steps also holds tool results and setup, which inflated it.)
+    capped = sum(r.trace.stop_reason == "max_steps" for r in job.runs if (r.reward or 0) < 1)
+    # Context health: history is never trimmed, so failures with a small peak are not context loss.
+    peak = max((max((getattr(s.usage, "prompt_tokens", 0) or 0 for s in r.trace.steps if s.source == "agent"), default=0)
+                for r in job.runs), default=0)
+    ends = dict(Counter(r.trace.stop_reason or "error" for r in job.runs if (r.reward or 0) < 1))
     lo, hi = wilson(k, n)
     verdict = "too easy" if lo > 0.30 else "too hard" if hi < 0.05 else "in band" if 0.05 <= k / n <= 0.30 else "unclear"
     if errors:
         verdict = f"INVALID: {errors}/{n} rollouts errored (harness/spec bug, not model failures)"
     cost = n * COST_PER_EPISODE.get(MODEL, 0.0)
     print(f"{TASK}: {k}/{n} = {k / n:.0%} (90% CI {lo:.0%}-{hi:.0%}) -> {verdict}; "
-          f"{capped} failures hit the {STEPS}-step cap; est cost ${cost:.2f}")
+          f"{capped} failures hit the {STEPS}-step cap; failures ended by {ends}; peak context {peak} tokens; "
+          f"est cost ${cost:.2f}")
     save_traces(job)
     log = Path(__file__).parents[1] / "runs" / "log.jsonl"
     log.parent.mkdir(exist_ok=True)
     with log.open("a") as f:
         f.write(json.dumps({"time": time.strftime("%Y-%m-%d %H:%M"), "task": TASK, "model": MODEL, "steps": STEPS,
                             "effort": EFFORT, "cameras": os.environ.get("CAMERAS", "top,wrist"), "seed0": SEED0,
-                            "k": k, "n": n, "errors": errors, "capped": capped, "job": job.id, "est_cost": round(cost, 3)}) + "\n")
+                            "image": IMAGE, "peak_tokens": peak, "fail_ends": ends, "k": k, "n": n, "errors": errors, "capped": capped, "job": job.id, "est_cost": round(cost, 3)}) + "\n")
 
 
 def save_traces(job) -> None:

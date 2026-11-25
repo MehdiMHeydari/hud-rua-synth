@@ -1,0 +1,28 @@
+name: heavy_cube
+prompt: >-
+  The three red cubes look identical, but exactly one is much heavier than the other two.
+  Find the heavy cube and put it down entirely inside the green circle. The two light cubes must
+  not end up with their centres inside the circle. Leave every cube released and at rest.
+objects:
+  - {name: heavy, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 1.0, friction: 2.0, x: [0.40, 0.45], y: [0.17, 0.21]}
+  - {name: light_a, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 0.2, x: [0.40, 0.45], y: [-0.02, 0.02]}
+  - {name: light_b, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 0.2, x: [0.40, 0.45], y: [-0.21, -0.17]}
+  - {name: goal, shape: zone, size: [0.13], color: green, x: [0.63, 0.67], y: [-0.12, 0.12]}
+# Which spot holds the heavy cube changes per seed; vision can't tell them apart. Measured with a
+# closed-finger push: a light cube slides 13 cm with the hand; the heavy one moves ~4 cm and the hand
+# stops ~11 cm short ("blocked"). Friction 2 also tightens the grip, so it still lifts (sags ~1 cm).
+shuffle: [[heavy, light_a, light_b]]
+success:
+  in_zone: {object: heavy, zone: goal, radius: 0.04}
+  clear: {zone: goal, objects: [light_a, light_b]}
+# Knows from the seed which one is heavy (spec shuffle), so it just carries it over.
+oracle:
+  - {at: heavy, offset: [0, 0, 0.15], gripper: open}
+  - {at: heavy, gripper: open}
+  - {at: heavy, gripper: closed}
+  - {at: heavy, offset: [0, 0, 0.15], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.17], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.03], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.03], gripper: open}
+  - {at: goal, offset: [0, 0, 0.17], gripper: open}
+knobs: {cubes: 3, heavy_mass: 1.0, heavy_friction: 2.0}

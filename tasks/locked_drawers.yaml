@@ -1,0 +1,42 @@
+name: locked_drawers
+prompt: >-
+  Three identical drawers stand side by side; each drawer starts closed. Only one of them can be
+  opened; the other two are locked. Put the yellow block inside the drawer that opens, then close it
+  fully. Leave the block released inside it.
+objects:
+  - {name: free, shape: drawer, size: [0.22, 0.20, 0.12], color: wood, mass: 0.5,
+     x: [0.66, 0.68], y: [0.23, 0.25], travel: 0.16, start: 0.0}
+  # Locked = 2 mm of travel: the tab gives a little, then the hand stops ("blocked").
+  - {name: locked_a, shape: drawer, size: [0.22, 0.20, 0.12], color: wood, mass: 0.5,
+     x: [0.66, 0.68], y: [-0.01, 0.01], travel: 0.002, start: 0.0}
+  - {name: locked_b, shape: drawer, size: [0.22, 0.20, 0.12], color: wood, mass: 0.5,
+     x: [0.66, 0.68], y: [-0.25, -0.23], travel: 0.002, start: 0.0}
+  - {name: block, shape: box, size: [0.04, 0.04, 0.04], color: yellow, x: [0.40, 0.45], y: [-0.44, -0.40]}
+# Which slot opens changes per seed; the drawers look the same, so only trying them tells.
+shuffle: [[free, locked_a, locked_b]]
+success:
+  inside: {object: block, container: free}
+  closed: {object: free, fraction: 0.05}
+# Knows from the seed which drawer opens: open it, drop the block 4 cm behind the open tray's
+# centre (clear of the cabinet front), push it shut on the tab's end with closed fingers
+# (re-gripping the tab nudged it 2 cm, so the hand stalled short of the closed position).
+oracle:
+  - {at: free.handle, offset: [0, 0, 0.10], gripper: open}
+  - {at: free.handle, gripper: open}
+  - {at: free.handle, gripper: closed}
+  - {at: free.handle, offset: [-0.16, 0, 0], gripper: closed}
+  - {at: free.handle, offset: [-0.16, 0, 0], gripper: open}
+  - {at: free.handle, offset: [-0.16, 0, 0.10], gripper: open}
+  - {at: block, offset: [0, 0, 0.15], gripper: open}
+  - {at: block, gripper: open}
+  - {at: block, gripper: closed}
+  - {at: block, offset: [0, 0, 0.15], gripper: closed}
+  - {at: free, offset: [-0.20, 0, 0.20], gripper: closed}
+  - {at: free, offset: [-0.20, 0, 0.04], gripper: closed}
+  - {at: free, offset: [-0.20, 0, 0.04], gripper: open}
+  - {at: free, offset: [-0.20, 0, 0.20], gripper: open}
+  - {at: free.handle, offset: [-0.21, 0, 0.10], gripper: closed}
+  - {at: free.handle, offset: [-0.21, 0, 0], gripper: closed}
+  - {at: free.handle, offset: [-0.025, 0, 0], gripper: closed}
+  - {at: free.handle, offset: [-0.06, 0, 0.10], gripper: closed}
+knobs: {drawers: 3, locked: 2}

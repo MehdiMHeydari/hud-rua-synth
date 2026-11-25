@@ -18,7 +18,7 @@ GEOMS = {"box": mujoco.mjtGeom.mjGEOM_BOX, "cylinder": mujoco.mjtGeom.mjGEOM_CYL
 PRIMITIVES = tuple(GEOMS)
 COMPOUND = ("hook",)  # free bodies made of several boxes
 ARTICULATED = ("drawer",)
-FIXED = ("hole_block", "zone")
+FIXED = ("hole_block", "zone", "platform")
 ASSET = ("asset",)  # a free body from the library; size and mass come from its catalog card
 
 ASSET_DIR = Path(__file__).parents[1] / "assets"
@@ -47,14 +47,16 @@ def part_offset(shape: str, size: list[float], part: str | None) -> np.ndarray:
 
 
 def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mass: float,
-        travel: float = 0.2, damping: float = 2.0, hole: float = 0.04, asset: str | None = None) -> None:
+        travel: float = 0.2, damping: float = 2.0, hole: float = 0.04, asset: str | None = None,
+        friction: float = 1.0) -> None:
     """Add one object to the scene. Primitives and compounds are free bodies; templates are fixed to the table."""
     if shape in PRIMITIVES:
         body = spec.worldbody.add_body(name=name)
         body.add_freejoint()
         # Spec sizes are full lengths; MuJoCo wants halves (cylinder: radius, half-height).
         # condim=4 adds twisting friction so grasped objects don't pivot about the finger axis.
-        body.add_geom(type=GEOMS[shape], size=[v / 2 for v in size], rgba=rgba, mass=mass, condim=4)
+        body.add_geom(type=GEOMS[shape], size=[v / 2 for v in size], rgba=rgba, mass=mass, condim=4,
+                      friction=[friction, 0.005, 0.0001])
     elif shape == "hook":
         _add_hook(spec, name, size, rgba, mass)
     elif shape == "drawer":
@@ -64,9 +66,13 @@ def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mas
     elif shape == "asset":
         centre, _, mass_at_1000 = measure(asset)
         _add_asset(spec, name, asset, density=1000 * mass / mass_at_1000, offset=-centre)
+    elif shape == "platform":  # a solid fixed box, e.g. a ledge to slide things over
+        spec.worldbody.add_body(name=name).add_geom(type=GEOMS["box"], size=[v / 2 for v in size],
+                                                    pos=[0, 0, size[2] / 2], rgba=rgba)
     elif shape == "zone":
-        # Paint on the table: contype/conaffinity 0 so it is seen but never touched.
-        spec.worldbody.add_body(name=name).add_geom(type=GEOMS["cylinder"], size=[size[0] / 2, 0.0005],
+        # Paint on the table: contype/conaffinity 0 so it is seen but never touched. [d] circle, [x, y] rectangle.
+        kind, half = ("cylinder", [size[0] / 2]) if len(size) == 1 else ("box", [size[0] / 2, size[1] / 2])
+        spec.worldbody.add_body(name=name).add_geom(type=GEOMS[kind], size=[*half, 0.0005],
                                                     pos=[0, 0, 0.0005], rgba=rgba, contype=0, conaffinity=0)
     else:
         raise ValueError(f"unknown shape {shape!r}")
@@ -83,6 +89,12 @@ def _add_hook(spec, name, size, rgba, mass) -> None:
                       ([length / 2 - t / 2, reach / 2, 0], [t / 2, reach / 2, t / 2])):
         body.add_geom(type=GEOMS["box"], pos=pos, size=half, rgba=rgba, mass=mass / 2, condim=4,
                       friction=[1, 0.1, 0.0001])
+
+
+# Static friction on the slide (N). Without it, pulling the hand back after pushing the drawer shut
+# dragged it 1-7 mm open again, so Astra's "drawer is closed" read as false (Nov 24 trace review).
+# 1 N stops that and is lighter than any real drawer.
+DRAWER_FRICTION = 0.5
 
 
 def _add_drawer(spec, name, size, rgba, mass, travel, damping) -> None:
@@ -102,7 +114,7 @@ def _add_drawer(spec, name, size, rgba, mass, travel, damping) -> None:
     # cabinet counts as world, so MuJoCo's parent-child exclusion doesn't apply and it jams).
     spec.add_exclude(bodyname1=name, bodyname2=f"{name}_drawer")
     drawer.add_joint(name=f"{name}_slide", type=mujoco.mjtJoint.mjJNT_SLIDE, axis=[-1, 0, 0],
-                     range=[0, travel], damping=damping)
+                     range=[0, travel], damping=damping, frictionloss=DRAWER_FRICTION)
     inner_w, inner_h, floor = w / 2 - 1.5 * WALL, (h - 3 * WALL) / 2, 1.5 * WALL
     for pos, half in (([0, 0, floor], [d / 2 - WALL, inner_w, WALL / 2]),  # tray floor
                       ([-d / 2 + WALL / 2, 0, floor + inner_h], [WALL / 2, inner_w, inner_h]),  # front face

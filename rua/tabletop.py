@@ -18,7 +18,7 @@ import spec
 from sim import Sim
 
 FPS = 20
-IMAGE = 256
+IMAGE = int(os.environ.get("IMAGE", 256))  # px per camera, launch-time like CAMERAS
 CAMERAS = tuple(os.environ.get("CAMERAS", "top,wrist").split(","))
 DIMS = ["tcp.x", "tcp.y", "tcp.z", "tcp_quat.qx", "tcp_quat.qy", "tcp_quat.qz", "tcp_quat.qw", "gripper"]
 CONTRACT = {

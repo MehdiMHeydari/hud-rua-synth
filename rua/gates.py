@@ -134,7 +134,7 @@ ENTIRELY_INSIDE = r"(entirely|fully|completely) (inside|within|in)"
 
 def thresholds(task: spec.TaskSpec, kind: str, p) -> list[tuple[str, float, str | None]]:
     """(field, value, accepted phrase) for each numeric threshold a predicate grades on. Not listed:
-    `unmoved` ("leave it where it is" is stricter than its tol), `stacked`/`inside` (geometric)."""
+    `unmoved` ("leave it where it is" is stricter than its tol), `stacked`/`inside`/`clear` (geometric), `tipped` ("on its side")."""
     if kind == "lifted":
         return [("height", p.height, None)]
     if kind == "opened":
@@ -256,6 +256,14 @@ def asset_checks(asset: str, render_dir: Path) -> list[tuple[str, str | None]]:
         rise = sim.body_pos("obj")[2] - spawn[2]
         held = rise > 0.08 and objects.touching_robot(sim.model, sim.data, "obj")
         out.append(("grasp", None if held else f"rose {rise * 100:.1f} cm after a 10 cm lift"))
+        if held:  # (h) set it down, open, rise: it must stay behind. Astra saw a pill bottle stay wedged
+            sim.move_to(grip, yaw=yaw, gripper=0)  # between fully open fingers in make_room (Nov 24).
+            sim.move_to(grip, yaw=yaw, gripper=1)
+            sim.move_to(grip + [0, 0, 0.10], yaw=yaw, gripper=1)
+            sim._run(0.5)
+            rise = sim.body_pos("obj")[2] - spawn[2]
+            stuck = rise > 0.02 or objects.touching_robot(sim.model, sim.data, "obj")
+            out.append(("release", f"still {rise * 100:.1f} cm up / touching the open hand" if stuck else None))
     return out
 
 

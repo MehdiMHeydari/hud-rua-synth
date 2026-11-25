@@ -9,21 +9,28 @@ rua/spec.py (it can miss objects or mislabel them), drop "no match" objects, the
 
 ## Building blocks (the only vocabulary; rua/spec.py is the source of truth)
 - Shapes: box, cylinder, sphere (free); hook (free, compound, part `handle`); drawer (articulated,
-  part `handle`, fields `travel`, `damping`, `start`); hole_block (fixed, field `hole`); zone (fixed, visual only).
+  part `handle`, fields `travel`, `damping`, `start`); hole_block (fixed, field `hole`); platform (fixed solid box, e.g. a ledge); zone (fixed, visual only; size `[d]` circle or `[x, y]` rectangle).
+  Primitives take `friction` (default 1; it also sets grip, MuJoCo uses the larger of the two).
 - Scanned assets: `{shape: asset, asset: <id>}` with an `admitted: true` id from `assets/catalog.yaml`; size and
   mass come from the card (never set `size`; no `color`, they are textured). Body origin = bbox centre, so
   predicates treat it like a box of the card size. Use `graspable`/`hollow` from the card: only graspable
   ones can be picked, only hollow ones can be an `inside` container (centre within the rim, bottom below it).
 - Success predicates (all must hold, graded on the final state): lifted, opened, closed, inserted,
-  in_zone, inside, stacked, near_offset, unmoved.
+  in_zone, inside, stacked, near_offset, unmoved, clear (no listed object's centre over a zone, all at rest on the table), tipped (tilted >= `angle` deg).
+- `z` on an object: height of the surface it starts on (e.g. on a platform); offsets are from its centre.
 - Placement: `x`, `y`, `yaw` ranges, sampled per seed. Keep everything reachable (x 0.3-0.8 at table height)
   and >= 5 cm inside the top camera's view (roughly x 0.0-1.0, y +-0.6; the `visible` gate checks).
   `layout_yaw: [lo, hi]` rotates the whole layout per seed so relations aren't always on the same side.
+  `shuffle: [[a, b, c]]` swaps the poses of same-shaped objects per seed, so a hidden property (mass,
+  a locked drawer) moves around; success and oracle name the object, so they follow it.
+- `perturb: {object, offset: [dx, dy]}`: the first time the task is solved, the object is moved by the
+  offset once, unannounced. The oracle must place it again (it lands at its first drop + offset).
 - Ranges are independent per object, so relative distances jitter by the sum of the ranges: if the task
   depends on a relation (closest, left of), sample 200 seeds with `spec.load(...).sample(seed)` and check
   the margin holds on all of them. Gates run 5 seeds by default (`SEEDS=12` for more).
 - Oracle: steps `{at: object[.part], offset: [dx,dy,dz] in the object's frame, yaw: deg, gripper: open|closed}`.
-  Tool yaw 0 closes the fingers along world y. Part offsets (e.g. a drawer `handle`) are for the
+  Tool yaw 0 closes the fingers along world y. `tool: [roll, pitch, yaw]` (deg, world) replaces
+  straight-down for side pinches; [-135, 0, -90] = fingers forward and 45 deg down, closing across a thin edge. Part offsets (e.g. a drawer `handle`) are for the
   closed position; add `start * travel` yourself for a drawer that starts open.
 - Gripping a part can move it (closing on a drawer tab nudges the drawer ~2 cm); push with closed
   fingers when you only need to push.
