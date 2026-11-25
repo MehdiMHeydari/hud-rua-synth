@@ -7,6 +7,8 @@ The oracle plan is resolved against the same sampled poses, so it never reads th
 from pathlib import Path
 from typing import Literal, Union
 
+import re
+
 import numpy as np
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -37,6 +39,7 @@ class Obj(BaseModel):
     damping: float = 2.0  # drawer only: resistance to sliding (N*s/m), a difficulty knob
     start: float = 0.0  # drawer only: how far open at reset, as a fraction of travel
     hole: float = 0.04  # hole_block only: side of the square hole (m); minus the peg width = clearance
+    only: list[str] | None = None  # exists only in these variants (see TaskSpec.variants); parked out of sight otherwise
 
 
     @model_validator(mode="before")
@@ -152,6 +155,11 @@ class TaskSpec(BaseModel):
     # drawer) is never at the same spot; success and oracle name the object, so they follow it.
     shuffle: list[list[str]] = []
     perturb: Perturb | None = None
+    # Seed s plays variants[s % len] (a cycle, so any run of len seeds has the exact mix). Variants
+    # listed in `impossible` can't be done: they are graded on the reply ending in IMPOSSIBLE alone,
+    # and a feasible one also fails if the reply claims IMPOSSIBLE (so always declining doesn't pay).
+    variants: list[str] = []
+    impossible: list[str] = []
     knobs: dict[str, float | str] = {}
     # Success thresholds deliberately not stated in the prompt, "kind.field" -> why (the `prompt` gate
     # requires every other one to be stated: OpenRUA traced 79/413 failures to unstated thresholds).
@@ -191,6 +199,11 @@ class TaskSpec(BaseModel):
         for name in [n for g in self.shuffle for n in g] + ([self.perturb.object] if self.perturb else []):
             if name not in by_name:
                 raise ValueError(f"shuffle/perturb references unknown object {name!r}")
+        names = {n for o in self.objects for n in o.only or []}
+        if not names | set(self.impossible) <= set(self.variants):
+            raise ValueError(f"`only`/`impossible` name variants not in variants: {sorted(names | set(self.impossible))}")
+        if self.variants and set(self.variants) <= set(self.impossible):
+            raise ValueError("every variant is impossible: add a feasible one")
         for g in self.shuffle:
             if len({(by_name[n].shape, tuple(by_name[n].size)) for n in g}) > 1:
                 raise ValueError(f"shuffle group {g} must share shape and size (they swap poses)")
@@ -203,8 +216,29 @@ class TaskSpec(BaseModel):
     def obj(self, name: str) -> Obj:
         return next(o for o in self.objects if o.name == name)
 
+    def variant(self, seed: int) -> str | None:
+        return self.variants[seed % len(self.variants)] if self.variants else None
+
+    def feasible(self, seed: int) -> bool:
+        return self.variant(seed) not in self.impossible
+
+    def present(self, o: Obj, seed: int) -> bool:
+        return o.only is None or self.variant(seed) in o.only
+
+    def oracle_answer(self, seed: int) -> str:
+        """The oracle's final reply: it knows the variant from the seed."""
+        return "done" if self.feasible(seed) else f"IMPOSSIBLE: this seed is the {self.variant(seed)!r} variant"
+
+    def answer_conditions(self, seed: int, answer: str | None) -> dict[str, bool]:
+        """The predicates read from the agent's final reply (only for tasks with impossible variants)."""
+        if not self.impossible:
+            return {}
+        claimed = bool(re.search(r"\bIMPOSSIBLE\b", str(answer or "")))
+        return {"claimed_impossible": claimed} if not self.feasible(seed) else {"no_impossible_claim": not claimed}
+
     def sample(self, seed: int) -> dict[str, tuple[np.ndarray, float]]:
-        """Object name -> (origin position, yaw radians) for this seed. Deterministic."""
+        """Object name -> (origin position, yaw radians) for this seed, objects absent from this
+        seed's variant left out (Sim parks them). Deterministic."""
         rng = np.random.default_rng(seed)
         poses = {o.name: (np.array([rng.uniform(*o.x), rng.uniform(*o.y), objects.base_z(o.shape, o.size) + o.z]),
                           np.radians(rng.uniform(*o.yaw))) for o in self.objects}
@@ -212,19 +246,21 @@ class TaskSpec(BaseModel):
             for name, pose in zip(g, [poses[n] for n in rng.permutation(g)]):
                 poses[name] = pose
         if self.layout_yaw == (0, 0):  # no extra draw, so existing tasks keep their seeds
-            return poses
+            return {n: p for n, p in poses.items() if self.present(self.obj(n), seed)}
         a = np.radians(rng.uniform(*self.layout_yaw))
         pivot = np.mean([[np.mean(o.x), np.mean(o.y)] for o in self.objects], axis=0)
         rot = np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
         for name, (pos, yaw) in poses.items():
             pos[:2] = pivot + rot @ (pos[:2] - pivot)
             poses[name] = (pos, yaw + a)
-        return poses
+        return {n: p for n, p in poses.items() if self.present(self.obj(n), seed)}
 
     def plan(self, seed: int) -> list[tuple[np.ndarray, float | tuple, float]]:
         """Oracle waypoints for this seed: (tcp position, tool yaw or (roll, pitch, yaw) radians,
-        gripper 1 open / 0 closed)."""
+        gripper 1 open / 0 closed). Empty on an impossible variant: the oracle just replies."""
         poses, out = self.sample(seed), []
+        if not self.feasible(seed):
+            return out
         for s in self.oracle:
             name, _, part = s.at.partition(".")
             o, (pos, yaw) = self.obj(name), poses[name]
@@ -240,25 +276,31 @@ class TaskSpec(BaseModel):
             out.append((world, tool_yaw, float(s.gripper == "open")))
         return out
 
-    def conditions(self, sim) -> dict[str, bool]:
+    def conditions(self, sim, answer: str | None = "") -> dict[str, bool]:
         """Each success predicate separately, so a 0 score says which part failed.
-        sim gives body_pos(name), model, data, seed. Plain bools: numpy bools break HUD's JSON grading."""
-        return {kind: all(bool(self._holds(kind, q, sim)) for q in (p if isinstance(p, list) else [p]))
-                for kind, p in self.success.items()}
+        sim gives body_pos(name), model, data, seed. Plain bools: numpy bools break HUD's JSON grading.
+        An impossible variant skips `success` and checks nothing was knocked off the table instead."""
+        if not self.feasible(sim.seed):
+            free = [o.name for o in self.objects if self.present(o, sim.seed) and o.shape not in objects.ARTICULATED + objects.FIXED]
+            out = {"on_table": all(bool(sim.body_pos(n)[2] > 0) for n in free)}
+        else:
+            out = {kind: all(bool(self._holds(kind, q, sim)) for q in (p if isinstance(p, list) else [p]))
+                   for kind, p in self.success.items()}
+        return {**out, **self.answer_conditions(sim.seed, answer)}
 
     def final_state(self, sim) -> dict:
         """Numbers behind the grade for trace review: object positions (mm), drawer open fraction,
         and what the arm still touches. Review agents couldn't tell "drawer 6% open" from "never opened"."""
-        out = {}
-        for o in self.objects:
+        out = {"variant": self.variant(sim.seed), "feasible": self.feasible(sim.seed)} if self.variants else {}
+        for o in (o for o in self.objects if self.present(o, sim.seed)):
             pos = [round(float(v) * 1000) for v in sim.body_pos(o.name)]
             out[o.name] = {"pos_mm": pos, "held": bool(objects.touching_robot(sim.model, sim.data, o.name))}
             if o.shape in objects.ARTICULATED:
                 out[o.name]["open"] = round(objects.joint_fraction(sim.model, sim.data, o.name)[0], 3)
         return out
 
-    def is_success(self, sim) -> bool:
-        return all(self.conditions(sim).values())
+    def is_success(self, sim, answer: str | None = "") -> bool:
+        return all(self.conditions(sim, answer).values())
 
     def _holds(self, kind: str, p, sim):
         if kind == "stacked":  # each centred on the one below and one block-height up, the bottom on the table

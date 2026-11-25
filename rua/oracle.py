@@ -27,4 +27,4 @@ class Oracle(Agent):
         client = await run.client.open("control")
         for pos, yaw, gripper in task.plan(args.get("seed", 0)):
             await client.call_tool("move_to", move_args(pos, yaw, gripper))
-        run.trace.content = f"oracle: {task.name}"
+        run.trace.content = task.oracle_answer(args.get("seed", 0))  # the final reply, graded on impossible variants

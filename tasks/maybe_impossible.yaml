@@ -1,0 +1,33 @@
+name: maybe_impossible
+prompt: >-
+  Put the red peg all the way down into the hole of the white block. If it can't be done, don't
+  force it: end your reply with IMPOSSIBLE and the reason.
+# Half the seeds can't be done, and nothing in the prompt says which. Feasible: peg_in_hole's 3 cm
+# peg and 11.5 mm clearance. plugged: the hole is a blind hole, filled to 5 mm below the rim (from
+# above, its floor is white, not wood; a peg set in stands 5.5 cm proud). too_wide: the peg is
+# 4.5 cm, 3.5 mm wider than the hole (about 1 px in the top view; it rests on the rim when tried).
+variants: [ok, plugged, ok, too_wide]
+impossible: [plugged, too_wide]
+objects:
+  - {name: peg, shape: box, size: [0.03, 0.03, 0.06], color: red, x: [0.38, 0.48], y: [-0.2, -0.1], yaw: [20, 70],
+     only: [ok, plugged]}
+  - {name: wide_peg, shape: box, size: [0.045, 0.045, 0.06], color: red, x: [0.38, 0.48], y: [-0.2, -0.1], yaw: [20, 70],
+     only: [too_wide]}
+  - {name: holder, shape: hole_block, size: [0.12, 0.12, 0.04], hole: 0.0415, color: white, x: [0.55, 0.55], y: [0.12, 0.12]}
+  - {name: plug, shape: platform, size: [0.04, 0.04, 0.035], color: white, x: [0.55, 0.55], y: [0.12, 0.12],
+     only: [plugged]}
+# Holder and plug share a fixed spot, so they stay aligned; the layout turns to move the hole per seed.
+layout_yaw: [-30, 30]
+success:
+  inserted: {object: peg, target: holder, depth: 0.02}
+# Feasible seeds: peg_in_hole's plan. Impossible seeds: no moves, the reply says IMPOSSIBLE.
+oracle:
+  - {at: peg, offset: [0, 0, 0.15], gripper: open}
+  - {at: peg, offset: [0, 0, 0.005], gripper: open}
+  - {at: peg, offset: [0, 0, 0.005], gripper: closed}
+  - {at: peg, offset: [0, 0, 0.15], gripper: closed}
+  - {at: holder, offset: [0, 0, 0.15], gripper: closed}
+  - {at: holder, offset: [0, 0, 0.065], gripper: closed}
+  - {at: holder, offset: [0, 0, 0.065], gripper: open}
+  - {at: holder, offset: [0, 0, 0.15], gripper: open}
+knobs: {impossible_share: 0.5, too_wide_mm: 3.5, plug_recess_mm: 5, clearance_mm: 11.5}

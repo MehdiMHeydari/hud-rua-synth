@@ -78,7 +78,7 @@ def gate_robust(sim: Sim, seed: int, error: float = 0.005) -> str | None:
         shift = error * np.array([np.cos(k * np.pi / 2 + 0.4), np.sin(k * np.pi / 2 + 0.4), 0])
         for i, (pos, yaw, gripper) in enumerate(plan):
             sim.move_to(pos + (shift if i >= len(plan) // 2 else 0), yaw=yaw, gripper=gripper)
-        passed += sim.success()
+        passed += sim.success(sim.task.oracle_answer(seed))
     return None if passed >= 3 else f"oracle fails with 5 mm placement error ({passed}/4): precision tighter than the tool allows"
 
 
@@ -95,7 +95,8 @@ def gate_visible(sim: Sim, seed: int, margin: float = 0.05) -> str | None:
 
 
 def gate_trivial(sim: Sim, seed: int, rng: np.random.Generator) -> str | None:
-    """Gate 3: not already solved, and doing nothing or acting randomly doesn't solve it."""
+    """Gate 3: not already solved, and doing nothing or acting randomly doesn't solve it (with no
+    reply, so on an impossible variant only an IMPOSSIBLE reply can pass)."""
     if sim.success():
         return "already solved at reset"
     sim.move_to(sim.data.site_xpos[sim.tcp])  # do nothing for a while
@@ -117,11 +118,11 @@ def gate_oracle(sim: Sim, seed: int) -> str | None:
         err = sim.move_to(pos, yaw=yaw, gripper=gripper)
         if err > 0.02:
             return f"oracle step {i} stopped {err * 100:.1f} cm short (unreachable?)"
-    if sim.success():
+    if sim.success(answer := sim.task.oracle_answer(seed)):
         return None
     # Which predicate failed and where things ended: "success is false" alone left the generator
     # guessing for 4 rounds (bottle_in_mug_push).
-    failed = [k for k, ok in sim.task.conditions(sim).items() if not ok]
+    failed = [k for k, ok in sim.task.conditions(sim, answer).items() if not ok]
     return f"oracle plan finished but {failed} is false; final state {sim.task.final_state(sim)}"
 
 

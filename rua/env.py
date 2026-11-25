@@ -8,6 +8,7 @@ from mcp.types import TextContent
 
 from hud.environment import Environment
 from hud.environment.robot import DirectControl
+import spec
 from tabletop import CAMERAS, DIMS, FPS, TabletopBridge, make_env
 
 CAMERA_NOTES = {
@@ -81,5 +82,9 @@ GraspControl(
 @env.template()
 async def episode(task: str = "lift_cube", seed: int = 0):
     ep = await sim.reset(task=task, seed=seed)
-    yield {"prompt": ep["prompt"]}
-    yield await sim.result()
+    answer = yield {"prompt": ep["prompt"]}
+    # The sim process never sees the reply, so predicates on it (IMPOSSIBLE claims) are added here.
+    res = await sim.result()
+    conditions = {**res["conditions"], **spec.load(task).answer_conditions(seed, answer)}
+    ok = all(conditions.values())
+    yield {**res, "score": float(ok), "success": ok, "conditions": conditions}

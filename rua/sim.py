@@ -13,6 +13,7 @@ import objects
 from spec import COLORS, TaskSpec
 
 TABLE_Z = 0.0  # robot base sits on the table top
+FLOOR_Z = -0.75
 PARK = (0.25, 0.0, 0.55)  # start pose: hand pulled back so the top camera sees the table
 OPEN, CLOSED = 255.0, 0.0  # Menagerie gripper actuator range
 DT_MOVE = 2.0  # seconds per metre-ish of travel; slow moves keep grasps (see docs/decisions.md)
@@ -43,7 +44,7 @@ def build_spec(task: TaskSpec) -> mujoco.MjSpec:
     hand.add_camera(name="wrist", pos=[0.15, 0, 0], xyaxes=look_at([0.15, 0, 0], [0, 0, 0.2], up=(1, 0, 0)), fovy=65)
     w = spec.worldbody
     w.add_light(pos=[-0.5, 1.0, 2.0], dir=[0.5, -0.5, -1], diffuse=[0.6, 0.6, 0.6])
-    w.add_geom(type=mujoco.mjtGeom.mjGEOM_PLANE, size=[3, 3, 0.1], pos=[0, 0, -0.75], rgba=[0.3, 0.3, 0.3, 1])
+    w.add_geom(type=mujoco.mjtGeom.mjGEOM_PLANE, size=[3, 3, 0.1], pos=[0, 0, FLOOR_Z], rgba=[0.3, 0.3, 0.3, 1])
     # Runs to x=1.15, past the arm's reach (tcp x <= ~0.90 at table height even with a tilted
     # wrist), so tasks can place objects that only a tool can bring back.
     w.add_geom(name="table", type=mujoco.mjtGeom.mjGEOM_BOX, size=[0.7, 0.8, 0.375],
@@ -91,8 +92,10 @@ class Sim:
         self.seed = seed  # success checks may compare against the start poses
         self.perturbed = False
         mujoco.mj_resetDataKeyframe(self.model, self.data, 0)  # Menagerie "home"
-        for name, (pos, yaw) in self.task.sample(seed).items():
-            body, quat = self.model.body(name), [np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)]
+        poses = self.task.sample(seed)
+        for i, o in enumerate(self.task.objects):  # absent from this seed's variant: on the floor behind the robot, out of every view
+            pos, yaw = poses.get(o.name, (np.array([-2.0 - 0.4 * i, 2.0, FLOOR_Z + objects.base_z(o.shape, o.size)]), 0.0))
+            body, quat = self.model.body(o.name), [np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)]
             if body.jntnum[0] and self.model.jnt_type[body.jntadr[0]] == mujoco.mjtJoint.mjJNT_FREE:
                 adr = self.model.jnt_qposadr[body.jntadr[0]]
                 self.data.qpos[adr:adr + 7] = [*pos, *quat]
@@ -162,8 +165,8 @@ class Sim:
         f = (size / 2) / np.tan(np.radians(self.model.cam_fovy[cam]) / 2)
         return np.array([size / 2 + f * p[0] / -p[2], size / 2 - f * p[1] / -p[2]])
 
-    def success(self) -> bool:
-        return self.task.is_success(self)
+    def success(self, answer: str | None = "") -> bool:
+        return self.task.is_success(self, answer)
 
     def _solve_ik(self, target: mink.SE3) -> np.ndarray:
         self.ik.update(self.data.qpos)

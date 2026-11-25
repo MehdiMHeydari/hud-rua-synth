@@ -23,6 +23,8 @@ rua/spec.py (it can miss objects or mislabel them), drop "no match" objects, the
   `layout_yaw: [lo, hi]` rotates the whole layout per seed so relations aren't always on the same side.
   `shuffle: [[a, b, c]]` swaps the poses of same-shaped objects per seed, so a hidden property (mass,
   a locked drawer) moves around; success and oracle name the object, so they follow it.
+- `variants: [ok, blocked, ...]` (seed s plays variants[s % len]) + `impossible: [blocked]` + `only: [...]` on objects:
+  an impossible variant is graded on the reply containing IMPOSSIBLE (the prompt must ask for it); a feasible one fails if it does.
 - `perturb: {object, offset: [dx, dy]}`: the first time the task is solved, the object is moved by the
   offset once, unannounced. The oracle must place it again (it lands at its first drop + offset).
 - Ranges are independent per object, so relative distances jitter by the sum of the ranges: if the task
