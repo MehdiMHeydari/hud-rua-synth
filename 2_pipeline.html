@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Pipeline design</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>
+  body{font:17px/1.6 -apple-system,Helvetica,Arial,sans-serif;max-width:860px;margin:40px auto;padding:0 24px;color:#1a1a1a}
+  h1{font-size:30px}h2{font-size:22px;margin-top:36px;border-bottom:1px solid #ddd;padding-bottom:4px}
+  table{border-collapse:collapse;margin:16px 0;font-size:15px}td,th{border:1px solid #ccc;padding:6px 10px;vertical-align:top;text-align:left}th{background:#f3f3f3}
+  code{background:#f3f3f3;padding:1px 4px;border-radius:3px;font-size:14px}pre{background:#f6f6f6;padding:12px;overflow:auto}pre code{background:none}
+  nav{font-size:14px;margin-bottom:24px}nav a{margin-right:14px}
+  </style>
+  <nav><a href="index.html">Overview</a><a href="1_capability_profile.html">Capability profile</a><a href="2_pipeline.html">Pipeline design</a><a href="3_performance_and_scale.html">Performance and bottlenecks</a><a href="https://github.com/MehdiMHeydari/hud-rua-synth">Code</a></nav>
+</head>
+<body>
+<h1 id="pipeline-design">Pipeline design</h1>
+<p>The pipeline turns a one-line intent into a checked MuJoCo task. An
+LLM writes the task. Code decides whether it is any good.</p>
+<pre class="mermaid"><code>flowchart LR
+    I[Intent&lt;br/&gt;one line, or a photo] --&gt; G[Generator&lt;br/&gt;LLM writes a YAML spec]
+    G --&gt; F{Free checks}
+    F --&gt;|fails, with the reason| G
+    F --&gt;|passes| H[Human approves]
+    H --&gt; P{Run the target model}
+    P --&gt;|too easy or too hard| G
+    P --&gt;|hard enough| T{Read the traces&lt;br/&gt;and replay them}
+    T --&gt;|the model failed| L[(Task library)]
+    T --&gt;|my harness failed| K[Fix it,&lt;br/&gt;add a free check]
+    K --&gt; F</code></pre>
+<h2 id="generator">Generator</h2>
+<p><code>python rua/generate.py "test whether the agent can ..."</code></p>
+<p>The model writes a YAML spec and nothing else: the objects, where
+they can start, what counts as success, a scripted solution, and the
+difficulty knobs. Fixed code builds the scene from it.</p>
+<p><strong>Why a spec and not code.</strong> Every earlier system I read
+has the LLM write task code, and they report the same weak point. In
+AnyTask the most common error is in <code>reset()</code>, where objects
+get placed. GenSim lists made-up assets as its first implementation
+error. RoboGen lost 13 of 155 tasks to broken scenes. Those are all
+things code can do deterministically, so I took them away from the
+model. It chooses what goes in the scene; code decides where things
+land.</p>
+<p><strong>Why a closed set of building blocks.</strong> GenSim2 found
+that composing tasks from parts already known to work beats asking the
+LLM to break a task down from the top (0.68 against 0.54 solution rate).
+Each of my blocks is tested once and reused. The model cannot invent an
+asset.</p>
+<p><strong>Why failures go back with the exact reason, for up to five
+rounds.</strong> RoboTwin 2.0 runs the same loop and needs 1.76 rounds
+on average. Mine took 1 to 5.</p>
+<p><strong>Why a photo is an optional input.</strong> The brief asks for
+it. <a
+href="https://github.com/MehdiMHeydari/hud-rua-synth/blob/main/rua/intent.py"><code>rua/intent.py</code></a>
+maps what it sees onto my building blocks and refuses anything that
+doesn't fit, so a photo can't smuggle in an object we have never
+tested.</p>
+<p><strong>What it can build.</strong> Boxes, cylinders, spheres, a
+hook, a drawer, a block with a hole, a ledge, a seesaw, a box with a
+sliding lid, painted zones, and scanned household objects from a small
+catalog. Also hidden weights, slippery surfaces, seeds where the task is
+impossible, and goal images.</p>
+<h2 id="discriminator">Discriminator</h2>
+<p>The usual funnel in this literature is: the code compiles, it runs,
+the generator's own solver finishes the task, a person or a vision model
+looks at it. That proves a task can be solved. It does not prove the
+grader is right. I found no generator paper that checks whether a robot
+doing nothing can pass.</p>
+<p>Benchmarks outside robotics show why that matters. In τ-bench a
+trivial agent passes 38% of tasks (Agentic Benchmark Checklist). OpenAI
+audited the SWE-bench Verified problems that o3 kept failing and found
+59% had flawed tests. So most of my checks are aimed at the grader and
+the harness, not the scene.</p>
+<p>Cheapest checks run first. Anything that fails goes back with its
+reason.</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>What it catches</th>
+<th>Why it's there</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Schema and prompt lint</td>
+<td>Missing fields; a prompt that doesn't state the success
+threshold</td>
+<td>An agent can't hit a threshold it was never told</td>
+</tr>
+<tr>
+<td>Settle, joints, reach, visible</td>
+<td>Objects that fall at the start, a jammed drawer, things the hand
+can't reach or the camera can't see</td>
+<td>Each one caught a real bug in my own scenes</td>
+</tr>
+<tr>
+<td>Trivial</td>
+<td>Tasks that pass if the robot does nothing or moves at random</td>
+<td>The missing negative control described above</td>
+</tr>
+<tr>
+<td>Oracle</td>
+<td>The scripted solution works, in the sim and through the real
+tool</td>
+<td>Standard practice (GenSim, GenSim2), with the addition that it must
+go through the same tool the agent uses</td>
+</tr>
+<tr>
+<td>Robust</td>
+<td>The solution still works with every placement 5 mm off</td>
+<td>The tool only stops within about 1 cm. A peg task at 7 mm clearance
+passed the oracle, and sol's 0/10 on it measured my tool, not sol</td>
+</tr>
+<tr>
+<td>Truth test (15 checks)</td>
+<td>Whether everything the agent is told is true</td>
+<td>All eight of luna's first failures were things I had told it
+wrong</td>
+</tr>
+<tr>
+<td>Asset admission</td>
+<td>A scanned object that can't be gripped, won't release, or doesn't
+rest flat</td>
+<td>Same idea as the truth test, for objects</td>
+</tr>
+<tr>
+<td>Model run</td>
+<td>How hard the task is for the target model</td>
+<td>Only a model can measure difficulty</td>
+</tr>
+<tr>
+<td>Trace review and replay</td>
+<td>Whether a failure is the model's or mine</td>
+<td>See doc 3. Half my hard results failed this</td>
+</tr>
+</tbody>
+</table>
+<p>Two choices inside that table:</p>
+<ul>
+<li><strong>Code does the judging, and a person takes one look.</strong>
+I did not use a vision model as the judge. RoboTwin 2.0's reached an F1
+of only 0.30 and called misaligned stacks successes. GenSim gets by with
+about ten seconds of human review per task, so I kept a human approval
+step with a one-page review sheet.</li>
+<li><strong>Success requires the object released and at rest.</strong>
+ManiSkill requires the robot to be still for the same reason: it stops
+an agent from scoring by passing through the goal.</li>
+</ul>
+<p>Each model run also reports three counts: failures that hit the step
+cap, failures where the arm jammed, and failures that stopped just short
+of the step budget. A low score is not read as "hard" until the first
+two are zero and the third has been read.</p>
+<p><strong>On the target difficulty.</strong> The brief asks for tasks
+an agent passes 5-30% of the time. As we discussed, I measured it on
+Astra and treated the range as a guide: lower is fine for this project
+as long as the failure is real. So a task at 0% stays in the set if the
+traces show an honest failure, and I spent the effort on proving the
+failures are real. For sample size, simple binomial arithmetic says 10
+episodes cannot tell 5% from 30%, so the sol calibrations used 20 or
+more.</p>
+<h2 id="harness">Harness</h2>
+<p>What the agent sees and does matters as much as the model. JustRUA
+raised one benchmark from 29.7 to 50.3 by changing only the harness. So
+each harness choice follows a measured result where I could find
+one.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>move_to</code> with absolute end-effector poses</td>
+<td>JustRUA found relative targets do not beat absolute ones (33.9
+against 38.0 overall). <code>move_joints</code> would make the model do
+the arm's geometry in its head, with no evidence that LLMs can. The SDK
+serves one motion tool per environment, so it would be a launch setting.
+I scoped it and did not build it</td>
+</tr>
+<tr>
+<td>Images after every move</td>
+<td>Showing images only on request dropped success from 83% to 68.5%
+(PyRUA-Lean)</td>
+</tr>
+<tr>
+<td>Two cameras, top and wrist</td>
+<td>More cameras are not reliably better: a third view changed scores by
+-3.6, +5.8 and +10.7 across three models (Anthropic). In my runs one
+angled camera left luna unable to judge depth, and the wrist view fixed
+it</td>
+</tr>
+<tr>
+<td>A plain-words grasp line ("fingers met; nothing between them")</td>
+<td>On real arms 32-64% of grasps close on nothing, depending on the
+model (Bitter Lesson)</td>
+</tr>
+<tr>
+<td>A line saying when a move stopped short</td>
+<td>In the LIBERO-10 study arms reached only 64-72% of the commanded
+distance, and models could not work out why</td>
+</tr>
+<tr>
+<td>Full history, medium effort</td>
+<td>Keeping the full episode history lifted JustRUA's score from 29.7 to
+34.7, and it ran at medium effort. High effort changed nothing in my one
+test</td>
+</tr>
+<tr>
+<td>Grading on the final state, hidden from the agent</td>
+<td>Models claim success on 24-39% of unfinished subtasks (RoboARCade),
+so the agent's word cannot be the grade</td>
+</tr>
+<tr>
+<td>MuJoCo with the Menagerie Panda and mink IK, moves interpolated</td>
+<td>A local benchmark showed that commanding a pose as one jump dropped
+a held cube, and interpolating kept it</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-five-tasks">The five tasks</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Spec</th>
+<th>Generator</th>
+<th>Astra</th>
+<th>Rollouts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>max_overhang</td>
+<td><a
+href="https://github.com/MehdiMHeydari/hud-rua-synth/blob/main/tasks/max_overhang.yaml"><code>tasks/max_overhang.yaml</code></a></td>
+<td>Regenerated from one line</td>
+<td>5/18</td>
+<td><a
+href="https://www.hud.ai/jobs/193ec7c258ab4d6a8730d7ab79144f26">1</a>,
+<a
+href="https://www.hud.ai/jobs/1652b36b603e4e66b43121918fe6aaa8">2</a>,
+<a
+href="https://www.hud.ai/jobs/423adafa92cc48febbc22d8a1cfe5c68">3</a></td>
+</tr>
+<tr>
+<td>balance_sort</td>
+<td><a
+href="https://github.com/MehdiMHeydari/hud-rua-synth/blob/main/tasks/balance_sort.yaml"><code>tasks/balance_sort.yaml</code></a></td>
+<td>Regenerated from one line</td>
+<td>1/12</td>
+<td><a
+href="https://www.hud.ai/jobs/6ca5c2608aea48dfb85781c7ff4dd899">1</a>,
+<a
+href="https://www.hud.ai/jobs/71b00f9d00244b08a137b0d87bfe33a3">2</a>,
+<a
+href="https://www.hud.ai/jobs/7aea5806aff543a585425c93a918b480">3</a></td>
+</tr>
+<tr>
+<td>weighted_overhang</td>
+<td><a
+href="https://github.com/MehdiMHeydari/hud-rua-synth/blob/main/tasks/weighted_overhang.yaml"><code>tasks/weighted_overhang.yaml</code></a></td>
+<td>Failed after 5 rounds</td>
+<td>0/12</td>
+<td><a
+href="https://www.hud.ai/jobs/3a19fb37768e49afb70514660a3acb7f">1</a>,
+<a
+href="https://www.hud.ai/jobs/2f29cee8ff454abf849e33412d0b3654">2</a>,
+<a
+href="https://www.hud.ai/jobs/d941c18f07d340e395c9fe23de0e6ec7">3</a>,
+<a
+href="https://www.hud.ai/jobs/522e6996f902453ab6b7db4ca8f7e653">4</a></td>
+</tr>
+<tr>
+<td>balance_pick</td>
+<td><a
+href="https://github.com/MehdiMHeydari/hud-rua-synth/blob/main/tasks/balance_pick.yaml"><code>tasks/balance_pick.yaml</code></a></td>
+<td>Regenerated from one line</td>
+<td>1/5</td>
+<td><a
+href="https://www.hud.ai/jobs/8b16fde453ee4fc2a8627a981134b14a">1</a></td>
+</tr>
+<tr>
+<td>overhang_or_impossible</td>
+<td><a
+href="https://github.com/MehdiMHeydari/hud-rua-synth/blob/main/tasks/overhang_or_impossible.yaml"><code>tasks/overhang_or_impossible.yaml</code></a></td>
+<td>Regenerated from one line</td>
+<td>3/5</td>
+<td><a
+href="https://www.hud.ai/jobs/fec577767283441394044b47c5531d9c">1</a></td>
+</tr>
+</tbody>
+</table>
+<p>All five pass every free check, and the scripted solution works 5/5
+through the real tool.</p>
+<p>I wrote the five specs by hand first, and the rollouts above ran on
+those. Then I gave the generator one sentence for each and let it write
+its own version from scratch.</p>
+<p>It produced four of the five, and each of its versions passes every
+check and has a working scripted solution (<a
+href="https://github.com/MehdiMHeydari/hud-rua-synth/blob/main/tasks/generated/"><code>tasks/generated/</code></a>).
+To see whether a generated task is as hard as mine, and not just a
+look-alike, I ran Astra on all four.</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Mine</th>
+<th>Generated</th>
+<th>Rollouts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>max_overhang</td>
+<td>5 of 18</td>
+<td>2 of 5</td>
+<td><a
+href="https://www.hud.ai/jobs/ca298106a4f94f63b5dd32a207e521b8">job</a></td>
+</tr>
+<tr>
+<td>overhang_or_impossible</td>
+<td>3 of 5</td>
+<td>4 of 5</td>
+<td><a
+href="https://www.hud.ai/jobs/26809c2e12d74ea2993f5df18e8b6997">job</a></td>
+</tr>
+<tr>
+<td>balance_pick</td>
+<td>1 of 5</td>
+<td>0 of 2</td>
+<td><a
+href="https://www.hud.ai/jobs/bbf975219b774c63afb9dde9718a28a3">job</a></td>
+</tr>
+<tr>
+<td>balance_sort</td>
+<td>1 of 12</td>
+<td>0 of 2</td>
+<td><a
+href="https://www.hud.ai/jobs/005339631d47433f8a4049e841b88dc4">job</a></td>
+</tr>
+</tbody>
+</table>
+<p>The generated tasks came out about as hard as the hand-written ones.
+The generator also made its own choices along the way: it colour-coded
+the circles in balance_sort where I used left-to-right order, and it
+added a height check to max_overhang that I hadn't thought of.</p>
+<p>The two balance rows count two attempts each because the other three
+were lost to the wrist jam described in doc 3. The generator laid the
+plank lengthways where I had laid it crossways. That is a reasonable
+layout, but it makes Astra turn its wrist a quarter turn about three
+times per attempt, against about once in three attempts on my layout,
+and every jam came right after one of those turns. So this is the arm's
+weak spot showing up under a new layout. I have added a line to the
+generator's instructions to lay long objects crossways.</p>
+<p>The one task the generator could not produce was weighted_overhang.
+Its scripted solution has to stack four off-centre blocks so that the
+tower still stands when every placement is 5 mm off. It did not find one
+in the rounds I gave it. Writing scripted solutions for physically
+delicate tasks is the generator's weak point, and doc 3 comes back to
+it.</p>
+<p>To run one:
+<code>TASK=max_overhang HUD_LLM_MODEL=gpt-6-astra STEPS=60 EPISODES=5 python rua/run.py</code></p>
+<h2 id="what-i-turned-down">What I turned down</h2>
+<table>
+<thead>
+<tr>
+<th>The other option</th>
+<th>What I did</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Have the model write the simulation code for each task, as most
+earlier systems do</td>
+<td>The model fills in a short description of the task (which objects,
+where they can start, what counts as success). Code I wrote once turns
+that description into the scene</td>
+<td>When models write the scene code themselves, it usually runs but
+puts objects in the wrong place or uses objects that don't exist.
+AnyTask, GenSim and RoboGen all report this as their most common
+failure. A description can be checked line by line before anything is
+simulated</td>
+</tr>
+<tr>
+<td>Let the model invent any object it wants</td>
+<td>The model picks from a fixed list of objects that I have each
+tested</td>
+<td>GenSim2 found that building tasks out of parts already known to work
+succeeds more often than letting the model design from scratch (0.68
+against 0.54)</td>
+</tr>
+<tr>
+<td>Use a vision model to look at the result and judge whether the task
+is good</td>
+<td>Checks written in code, plus one look by a person before a task is
+accepted</td>
+<td>Vision models are poor judges here. In RoboTwin 2.0 the judge called
+misaligned stacks a success</td>
+</tr>
+<tr>
+<td>Treat "a model solved it" as proof that the task works</td>
+<td>Every task comes with a scripted solution that must succeed through
+the same tool the model uses</td>
+<td>If a model fails a task, that alone can't tell you whether the model
+or the task is at fault. A scripted solution settles that before any
+model runs</td>
+</tr>
+<tr>
+<td>Give points for progress along the way</td>
+<td>Grade only the final state of the table</td>
+<td>A robot can pass through the goal position without ever finishing
+the task. Grading the end state can't be fooled that way</td>
+</tr>
+</tbody>
+</table>
+<p>The full log of decisions is in <a
+href="https://github.com/MehdiMHeydari/hud-rua-synth/blob/main/docs/decisions.md"><code>docs/decisions.md</code></a>.</p>
+<h2 id="sources">Sources</h2>
+<ul>
+<li>GenSim, <a href="https://arxiv.org/html/2310.01361v2">arXiv
+2310.01361</a>. GenSim2, <a
+href="https://arxiv.org/html/2410.03645">arXiv 2410.03645</a></li>
+<li>RoboGen, <a href="https://arxiv.org/html/2311.01455v3">arXiv
+2311.01455</a>. AnyTask, <a
+href="https://arxiv.org/html/2512.17853v2">arXiv 2512.17853</a></li>
+<li>RoboTwin 2.0, <a href="https://arxiv.org/html/2506.18088v2">arXiv
+2506.18088</a></li>
+<li>Agentic Benchmark Checklist, <a
+href="https://arxiv.org/html/2507.02825v5">arXiv 2507.02825</a>. OpenAI
+on <a
+href="https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/">SWE-bench
+Verified</a></li>
+<li>ManiSkill2, <a href="https://arxiv.org/pdf/2302.04659">arXiv
+2302.04659</a></li>
+<li>JustRUA, <a href="https://arxiv.org/abs/2611.16009">arXiv
+2611.16009</a>. PyRUA-Lean, <a
+href="https://arxiv.org/pdf/2610.01939">arXiv 2610.01939</a></li>
+<li>Anthropic, <a
+href="https://www.anthropic.com/research/claude-plays-robotics">Claude
+plays robotics</a></li>
+<li>The Bitter Lesson Comes to Robotics, <a
+href="https://arxiv.org/html/2610.25287v1">arXiv 2610.25287</a>.
+LIBERO-10 frontier evaluation, <a
+href="https://arxiv.org/abs/2610.30051">arXiv 2610.30051</a>.
+RoboARCade, <a href="https://arxiv.org/abs/2611.08209">arXiv
+2611.08209</a></li>
+<li>Longer notes:
+<code>reports/Synthetic robot task generation review.md</code> and
+<code>reports/RUA harness failure factors.md</code></li>
+</ul>
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+document.querySelectorAll('pre.mermaid, pre > code.language-mermaid').forEach(el=>{const p=el.tagName==='CODE'?el.parentElement:el;const d=document.createElement('div');d.className='mermaid';d.textContent=el.textContent;p.replaceWith(d)});
+mermaid.initialize({startOnLoad:false});mermaid.run();
+</script>
+</body>
+</html>

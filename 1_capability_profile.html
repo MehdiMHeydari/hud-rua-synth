@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Capability profile</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>
+  body{font:17px/1.6 -apple-system,Helvetica,Arial,sans-serif;max-width:860px;margin:40px auto;padding:0 24px;color:#1a1a1a}
+  h1{font-size:30px}h2{font-size:22px;margin-top:36px;border-bottom:1px solid #ddd;padding-bottom:4px}
+  table{border-collapse:collapse;margin:16px 0;font-size:15px}td,th{border:1px solid #ccc;padding:6px 10px;vertical-align:top;text-align:left}th{background:#f3f3f3}
+  code{background:#f3f3f3;padding:1px 4px;border-radius:3px;font-size:14px}pre{background:#f6f6f6;padding:12px;overflow:auto}pre code{background:none}
+  nav{font-size:14px;margin-bottom:24px}nav a{margin-right:14px}
+  </style>
+  <nav><a href="index.html">Overview</a><a href="1_capability_profile.html">Capability profile</a><a href="2_pipeline.html">Pipeline design</a><a href="3_performance_and_scale.html">Performance and bottlenecks</a><a href="https://github.com/MehdiMHeydari/hud-rua-synth">Code</a></nav>
+</head>
+<body>
+<h1 id="capability-profile">Capability profile</h1>
+<p>Setup for every number here: a Franka arm in MuJoCo, driven by an LLM
+through HUD's <code>move_to</code> tool. The agent gets a top camera and
+a wrist camera (256 px), 60 steps, and medium reasoning effort. The main
+model is GPT-6 Astra. GPT-6 sol and luna are the cheaper
+comparisons.</p>
+<h2 id="summary">Summary</h2>
+<p>Astra understands the physics of these tasks. What it can't do
+reliably is carry out its own plan when there is little room for
+error.</p>
+<p>One task shows this clearly. The robot has to stack blocks on a ledge
+so the top block sticks out 11.5 cm past the edge. With two blocks that
+is impossible, and Astra says so on its first move without touching
+anything: "14/2 + 14/4 = 10.5 cm, short of the required 11.5 cm." With
+four blocks it is possible. Astra starts the right kind of stack, and it
+falls over about three times in four.</p>
+<h2 id="how-i-chose-the-tasks">How I chose the tasks</h2>
+<p><strong>I started from what the literature says agents get
+wrong.</strong> Recent studies put frontier models at 40-50% on standard
+manipulation suites: Astra scores 44% on LIBERO-10 (at high effort) and
+49.8% on RoboARCade. They name the same weak spots: precise placement,
+multi-step tasks, and claiming success that didn't happen (24-39% of
+subtasks in RoboARCade). So my first seven tasks covered those: drawers,
+ordered stacking, peg insertion, a hook tool, and placing things in
+another person's left and right. I tuned each to 15-30% on sol.</p>
+<p><strong>Then two things changed the plan.</strong> After our first
+sync I stopped building standard manipulation tasks, since labs already
+train on those, and looked outside pick-and-place. Then I ran Astra on
+the seven and it scored 40-100%. The standard families were no longer
+hard.</p>
+<p><strong>So I asked what the literature says is not
+improving.</strong> RoboARCade reports that failures come "mostly from
+choosing a poor manipulation strategy or executing a good one
+imprecisely, rarely from misunderstanding the scene". The Bitter Lesson
+study on real arms describes trials ending on an unrecoverable error,
+such as knocking an object off the table. A teammate in my lab said the
+same from experience: fast, contact-rich manipulation is where these
+agents break.</p>
+<p><strong>That gave me a recipe.</strong> Pick tasks where the right
+strategy is easy to know, the margin for carrying it out is thin, and
+one mistake cannot be undone. Stacking blocks out past an edge fits: the
+answer is a textbook result, and one bad placement puts a block on the
+floor. Weighing on a seesaw fits too: the method is obvious, and the
+surface moves under you.</p>
+<p><strong>Last, I gave each hard task an easier sibling.</strong> A low
+score alone doesn't say whether the model lacked the idea or the
+execution, so two of the five tasks exist only to answer that.</p>
+<p><strong>Robocurve's Six Easy Tasks came out on the last day</strong>,
+after the stacking and balance tasks were built. Astra scores 0/36 there
+on real robots, and every failure is physical: a dropped key, a bottle
+cap that never threads, a backpack that slides instead of being held. It
+backed up the direction. I also built three tasks straight from it
+(bracing a loose drawer, picking up a thin card, standing a bar
+upright), and none of them held up as hard in my sim. Astra braces once
+the prompt is fair and stands the bar up 5/5, and the thin card turned
+out to be a quirk of the simulator's contact model.</p>
+<h2 id="the-tasks-one-by-one">The tasks one by one</h2>
+<p><strong>max_overhang.</strong> I wanted a statics problem with a
+known answer. This is the book-stacking problem: how far can a stack
+lean out past an edge? With 14 cm blocks, one block reaches 7 cm, two
+reach 10.5, and four reach 14.6 at best. I set the target at 11.5 cm so
+it needs at least three blocks, each offset correctly, and can't be done
+by trial and error on one block. What I expected to be hard: every
+placement shifts the balance of everything above it, and a block that
+falls off the ledge is gone. My first scripted solution used 7 mm of
+safety per block and fell over on every seed, which told me the margins
+would matter before any model ran.</p>
+<p><strong>balance_sort.</strong> An earlier task, heavy_cube, hid one
+heavy cube among identical ones. Astra solved it 5/5 by pushing each
+cube and feeling which one resisted. That worked because the heavy cube
+was five times heavier. So I made the weights close (100, 150 and 220
+g), where a push or a lift tells you nothing, and put a balance on the
+table. Now the only way to know is to measure, and the agent has to plan
+which pairs to compare. What I expected to be hard: planning the
+comparisons. What turned out to be hard: getting cubes on and off a
+plank that tilts. Before trusting the result I wrote a solution that
+sorts the cubes from the plank's tilt alone, to prove it could be done.
+It works 5/5.</p>
+<p><strong>weighted_overhang.</strong> This puts the two ideas together.
+Each block has a weight hidden at one end, so its balance point is
+off-centre, and you can't see which end. The target is 15 cm, which is
+past what four ordinary blocks can reach (14.6), so the task can only be
+done by finding each block's light end and pointing it outward. What I
+expected to be hard: it needs both the measuring from balance_sort and
+the careful stacking from max_overhang, and a mistake in either ends the
+attempt.</p>
+<p><strong>balance_pick.</strong> The easier sibling of balance_sort.
+Same cubes, same balance, but only the heaviest has to be found: two
+weighings and one placement. I built it to answer one question.
+balance_sort's failures mostly ended close to the step limit, so was it
+hard, or just long? If Astra passed this, the answer was "long". It
+scored 1/5, and in all three failures where it named a cube it named the
+right one and then dropped it. So the balance itself is the problem.</p>
+<p><strong>overhang_or_impossible.</strong> The easier sibling of
+max_overhang. On half the seeds there are only two blocks, which can
+reach 10.5 cm at most, so the 11.5 cm target can't be met and the right
+answer is to say so. It came from an earlier task where Astra, offered
+the option to call a task impossible, gave up on two of five that could
+be done. I wanted to know whether Astra understands the limit or just
+tries things. It understands it exactly: on the two-block seeds it gave
+the formula in one or two calls and touched nothing. On the four-block
+seeds it passed one of three. That is the cleanest evidence for the
+headline: the knowledge is there and the building fails.</p>
+<h2 id="strengths">Strengths</h2>
+<ul>
+<li>Precise insertion, tool use, drawers, ordered stacking, and
+other-person frames: 40-100%.</li>
+<li>Visual tricks: picking the one real cube among flat red decals
+(5/5), rearranging objects to match a goal photo (5/5).</li>
+<li>Finding a heavy cube among identical ones by pushing them
+(5/5).</li>
+<li>Counterweights (3/5) and bracing a loose box against a visible stop
+(3/3).</li>
+<li>Honest reporting. When it fails it almost always says so.</li>
+</ul>
+<h2 id="results">Results</h2>
+<p>I only count attempts where my own setup didn't interfere, for
+example by the arm getting stuck. Doc 3 explains how I tell.</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>What the robot has to do</th>
+<th>Astra succeeded</th>
+<th>What goes wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>max_overhang</td>
+<td>Stack four blocks on a ledge so the top one sticks out 11.5 cm past
+the edge without anything falling</td>
+<td>5 of 18</td>
+<td>The stack tips when it lets go of the last block</td>
+</tr>
+<tr>
+<td>weighted_overhang</td>
+<td>The same, but every block has a hidden weight in one end, and the
+target is 15 cm</td>
+<td>0 of 12</td>
+<td>The lower blocks tip while it is still building</td>
+</tr>
+<tr>
+<td>balance_sort</td>
+<td>Three cubes look identical but weigh 100, 150 and 220 g. Put them in
+order of weight, using a seesaw on the table as a scale</td>
+<td>1 of 12</td>
+<td>It reads the seesaw correctly, then cubes slide off the tilting
+plank</td>
+</tr>
+<tr>
+<td>balance_pick</td>
+<td>Same cubes and seesaw, but only find the heaviest one</td>
+<td>1 of 5</td>
+<td>It names the right cube, then drops it taking it off the seesaw</td>
+</tr>
+<tr>
+<td>overhang_or_impossible</td>
+<td>max_overhang, but half the time there are only two blocks, which
+can't reach. Then the right answer is to say "impossible"</td>
+<td>3 of 5</td>
+<td>Right both times with two blocks. With four, it built a stack that
+held once in three tries</td>
+</tr>
+</tbody>
+</table>
+<p>Three things the traces show:</p>
+<ol type="1">
+<li><strong>It leaves no safety margin.</strong> The further a block
+sticks out, the closer the stack is to tipping. The task only needs 11.5
+cm, but Astra pushes the top block out to 12 or 12.5 cm, which makes its
+stack less stable than it has to be. My scripted solution does the
+opposite: it keeps every block a full centimetre back from the point
+where it would tip. The robot can only place a block to within about a
+centimetre, so a stack built right at the limit falls from one small
+placement error.</li>
+<li><strong>It tests by letting go.</strong> To find out whether
+something is stable it releases it and watches. When a wrong guess means
+a block on the floor, that one test ends the attempt.</li>
+<li><strong>It misreads small distances.</strong> One stack stood fine
+at 11.0 cm and was reported as "approximately 12 cm". Five millimetres
+is hard to see in a 256 px top view.</li>
+</ol>
+<p>The two siblings settle the question. balance_pick shows the trouble
+is handling cubes on the plank, not the length of the task.
+overhang_or_impossible shows Astra has the statics exactly right and
+loses in the building.</p>
+<h2 id="retracted-results">Retracted results</h2>
+<p>I had to withdraw three results after checking them. They are listed
+here because they are the easiest mistakes to repeat.</p>
+<ul>
+<li><strong>"Astra can't tell when it has failed."</strong> The drawer
+in my sim had no friction, so it slid open after Astra closed it. With
+friction added, that task went from 3/15 to 9/10.</li>
+<li><strong>"Astra can't find a hidden weight."</strong> The 1/10 was
+mostly my simulated arm jamming on a wrist turn. The true rate is
+somewhere between 10% and 60%.</li>
+<li><strong>"Astra never braces a loose object."</strong> It scored 0/8
+only while the prompt didn't mention the heavy block it could use. Once
+the prompt did, 5/10.</li>
+</ul>
+<h2 id="cheaper-models">Cheaper models</h2>
+<p>sol scored 0/10 on balance_sort and 2/10 on max_overhang. It had 40
+steps to Astra's 60, so part of that gap is the step budget. luna is at
+0-10% on nearly everything and is only useful for finding harness bugs
+cheaply.</p>
+<p>Difficulty depends on the model. A task set needs recalibrating
+whenever the model changes.</p>
+<h2 id="suggested-task-groups">Suggested task groups</h2>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Difficulty knob</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Statics and centre of mass</td>
+<td>Overhang distance, number of blocks</td>
+<td>max_overhang</td>
+</tr>
+<tr>
+<td>Hidden properties found by handling</td>
+<td>Mass ratio, where the weight sits</td>
+<td>weighted_overhang</td>
+</tr>
+<tr>
+<td>Using an instrument on an unstable surface</td>
+<td>Number of weighings, plank damping</td>
+<td>balance_sort, balance_pick</td>
+</tr>
+<tr>
+<td>Judging whether a task is possible</td>
+<td>Share of impossible seeds</td>
+<td>overhang_or_impossible</td>
+</tr>
+</tbody>
+</table>
+<p>Not worth generating for Astra: selecting among objects, reference
+frames, plain pick-and-place.</p>
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li>One robot, one arm, rigid objects, and a world that stands still
+between moves. The literature's clearest lasting gap is dynamic control
+(models act at about 0.3 Hz), and nothing here tests it.</li>
+<li>The two newest tasks have 5 episodes each.</li>
+<li>One real-robot result did not carry over. Standing a lying object
+upright is 0/20 for Astra at Robocurve and 5/5 in my sim, because a bar
+pinched at one end swings freely in our gripper.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>LIBERO-10 frontier evaluation, <a
+href="https://arxiv.org/abs/2610.30051">arXiv 2610.30051</a></li>
+<li>RoboARCade, <a href="https://arxiv.org/abs/2611.08209">arXiv
+2611.08209</a></li>
+<li>The Bitter Lesson Comes to Robotics, <a
+href="https://arxiv.org/html/2610.25287v1">arXiv 2610.25287</a></li>
+<li>Robocurve, <a href="https://robocurve.org/blog/six-easy-tasks/">Six
+Easy Tasks</a> and <a
+href="https://robocurve.org/opus-5-5-robodojo-rc-tier-1/">RoboDojo-RC
+Tier 1</a></li>
+<li>Longer notes on all of these:
+<code>reports/Synthetic robot task generation review.md</code></li>
+</ul>
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+document.querySelectorAll('pre.mermaid, pre > code.language-mermaid').forEach(el=>{const p=el.tagName==='CODE'?el.parentElement:el;const d=document.createElement('div');d.className='mermaid';d.textContent=el.textContent;p.replaceWith(d)});
+mermaid.initialize({startOnLoad:false});mermaid.run();
+</script>
+</body>
+</html>
