@@ -1,0 +1,44 @@
+name: counterweight
+prompt: >-
+  A white ledge 8 cm high stands on the table. Get the red cube (5 cm) to rest on top of something,
+  above the ledge's height, with its near side at least 8 cm past the ledge's near edge (the edge
+  facing the robot), measured toward the robot. You may use the plank and the blue cube. Leave every
+  object released and at rest.
+objects:
+  # Ledge face points at the robot (yaw 180), as in max_overhang. The plank alone can't carry the red
+  # cube that far out: with the red centre 5.5 cm past the edge the plank tips unless something heavy
+  # sits on its back end (torque about the edge: red 0.15 kg x 5.5 cm > plank 0.05 kg x <=1 cm).
+  - {name: ledge, shape: platform, size: [0.20, 0.20, 0.08], color: white, x: [0.66, 0.67], y: [-0.01, 0.01], yaw: [180, 180]}
+  - {name: plank, shape: box, size: [0.24, 0.04, 0.02], color: wood, mass: 0.05, x: [0.42, 0.44], y: [0.24, 0.26]}
+  - {name: blue, shape: box, size: [0.05, 0.05, 0.05], color: blue, mass: 0.30, x: [0.40, 0.42], y: [-0.25, -0.23]}
+  - {name: red, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 0.15, x: [0.60, 0.62], y: [-0.27, -0.25]}
+success:
+  overhang: {object: red, platform: ledge, beyond: 0.08}
+# Plank centre 1 cm behind the edge (overhangs 11 cm), blue on its back end, then red at 8.5 cm out.
+# Ledge-frame x: face at +0.10. Tops: ledge 0.08, plank 0.10.
+oracle:
+  - {at: plank, offset: [0, 0, 0.12], gripper: open}
+  - {at: plank, gripper: open}
+  - {at: plank, gripper: closed}
+  - {at: plank, offset: [0, 0, 0.12], gripper: closed}
+  - {at: ledge, offset: [0.09, 0, 0.20], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.09, 0, 0.092], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.09, 0, 0.092], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.09, 0, 0.20], yaw: 180, gripper: open}
+  - {at: blue, offset: [0, 0, 0.12], gripper: open}
+  - {at: blue, gripper: open}
+  - {at: blue, gripper: closed}
+  - {at: blue, offset: [0, 0, 0.15], gripper: closed}
+  - {at: ledge, offset: [0.00, 0, 0.25], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.00, 0, 0.13], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.00, 0, 0.13], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.00, 0, 0.25], yaw: 180, gripper: open}
+  - {at: red, offset: [0, 0, 0.12], gripper: open}
+  - {at: red, gripper: open}
+  - {at: red, gripper: closed}
+  - {at: red, offset: [0, 0, 0.15], gripper: closed}
+  - {at: ledge, offset: [0.185, 0, 0.25], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.185, 0, 0.13], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.185, 0, 0.13], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.185, 0, 0.25], yaw: 180, gripper: open}
+knobs: {beyond_cm: 8, counter_kg: 0.30, red_kg: 0.15}

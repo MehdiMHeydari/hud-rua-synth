@@ -48,7 +48,7 @@ def part_offset(shape: str, size: list[float], part: str | None) -> np.ndarray:
 
 def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mass: float,
         travel: float = 0.2, damping: float = 2.0, hole: float = 0.04, asset: str | None = None,
-        friction: float = 1.0, pivot: float = 0.05) -> None:
+        friction: float = 1.0, pivot: float = 0.05, weight: float = 0.0) -> None:
     """Add one object to the scene. Primitives and compounds are free bodies; templates are fixed to the table."""
     if shape in PRIMITIVES:
         body = spec.worldbody.add_body(name=name)
@@ -57,6 +57,9 @@ def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mas
         # condim=4 adds twisting friction so grasped objects don't pivot about the finger axis.
         body.add_geom(type=GEOMS[shape], size=[v / 2 for v in size], rgba=rgba, mass=mass, condim=4,
                       friction=[friction, 0.005, 0.0001])
+        if weight:  # hidden lead near the +x end: no contact, invisible, shifts the centre of mass only
+            body.add_geom(type=GEOMS["sphere"], size=[0.005], pos=[size[0] / 2 - 0.01, 0, 0], mass=weight,
+                          contype=0, conaffinity=0, rgba=[0, 0, 0, 0], group=3)
     elif shape == "hook":
         _add_hook(spec, name, size, rgba, mass)
     elif shape == "drawer":

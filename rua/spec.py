@@ -35,6 +35,7 @@ class Obj(BaseModel):
     y: tuple[float, float]
     yaw: tuple[float, float] = (0, 0)  # degrees
     z: float = 0.0  # height of the surface it starts on (e.g. a platform's height); 0 = the table
+    weight: float = 0.0  # box only: hidden lead (kg) at the object's own +x end, invisible; looks uniform
     pivot: float = 0.05  # seesaw only: hinge height above the table (m); size is the plank [length, width, thickness]
     travel: float = 0.2  # drawer only: how far it slides out (m)
     damping: float = 2.0  # drawer: resistance to sliding (N*s/m), a difficulty knob; seesaw: to swinging (N*m*s/rad)
