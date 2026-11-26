@@ -24,7 +24,7 @@ The model writes a YAML spec and nothing else: the objects, where they can start
 
 **Why a spec and not code.** Every earlier system I read has the LLM write task code, and they report the same weak point. In AnyTask the most common error is in `reset()`, where objects get placed. GenSim lists made-up assets as its first implementation error. RoboGen lost 13 of 155 tasks to broken scenes. Those are all things code can do deterministically, so I took them away from the model. It chooses what goes in the scene; code decides where things land.
 
-**Why a closed set of building blocks.** GenSim2 found that composing tasks from parts already known to work beats asking the LLM to break a task down from the top (0.68 against 0.54 solution rate). Each of our blocks is tested once and reused. The model cannot invent an asset.
+**Why a closed set of building blocks.** GenSim2 found that composing tasks from parts already known to work beats asking the LLM to break a task down from the top (0.68 against 0.54 solution rate). Each of my blocks is tested once and reused. The model cannot invent an asset.
 
 **Why failures go back with the exact reason, for up to five rounds.** RoboTwin 2.0 runs the same loop and needs 1.76 rounds on average. Mine took 1 to 5.
 
