@@ -1,0 +1,43 @@
+name: g_flat_card
+prompt: A thin white card (1 mm thick, 14 cm x 10 cm) lies flat on top of a heavy wooden platform block that is 14 cm tall. The platform's surface is slippery. Pick up the card and hold it so that its bottom is at least 22 cm above the table, which is 8 cm above the platform's top. Finish while still holding it there.
+# v5: the horizontal tool ([-90, 0, -90]) kept stopping short, but the 45 deg tool ([-135, 0, -90])
+# reached on every seed. The pinch now uses the 45 deg tool, closing across the card's edge
+# (fingers forward and 45 deg down).
+# This works on the near (-x) face because the hand rises back toward the robot, away from the
+# platform. With the jaws open, the lower jaw sits ~3 cm behind and below the TCP.
+# The TCP goes 0.5 cm inside the card's edge, 5 cm outside the platform face, so both jaws stay
+# clear of the face.
+# v2/v3:
+# - The platform is a heavy free box with priority 1 and friction 0.1, so dragging fingertips
+#   slide over it instead of jamming.
+# - The 10 x 14 cm card can't be edge-pinched from above (gripper opening 8 cm).
+# - The setup sits away from the base.
+# Plan:
+#   1. Drag: fingertips 4 cm past the card centre, pulled toward the robot. The card centre ends
+#      1.5 cm inside the near face, so 5.5 cm overhangs.
+#   2. Edge pinch on the overhang.
+#   3. Lift.
+# Platform centre z = 0.07 and card centre z = 0.1405, so card height is platform offset z 0.0705.
+objects:
+  - {name: platform, shape: box, size: [0.22, 0.30, 0.14], color: wood, mass: 3.0, friction: 0.1, priority: 1,
+     x: [0.66, 0.69], y: [-0.03, 0.03]}
+  - {name: card, shape: box, size: [0.14, 0.10, 0.001], color: white, mass: 0.01,
+     z: 0.14, x: [0.67, 0.68], y: [-0.03, 0.03]}
+success:
+  lifted: {object: card, height: 0.22}
+oracle:
+  # drag: closed fingertips pressed on the card's +x part, pulled toward the near face
+  - {at: card, offset: [0.04, 0, 0.08], gripper: closed}
+  - {at: card, offset: [0.04, 0, -0.002], gripper: closed}
+  - {at: platform, offset: [-0.055, 0, 0.0685], gripper: closed}
+  - {at: platform, offset: [-0.055, 0, 0.15], gripper: closed}
+  - {at: platform, offset: [-0.20, 0, 0.12], gripper: open}
+  # edge pinch: fingers forward and 45 deg down, closing across the overhanging edge
+  - {at: platform, offset: [-0.20, 0, 0.12], tool: [-135, 0, -90], gripper: open}
+  - {at: platform, offset: [-0.24, 0, 0.12], tool: [-135, 0, -90], gripper: open}
+  - {at: platform, offset: [-0.24, 0, 0.0705], tool: [-135, 0, -90], gripper: open}
+  - {at: platform, offset: [-0.16, 0, 0.0705], tool: [-135, 0, -90], gripper: open}
+  - {at: platform, offset: [-0.16, 0, 0.0705], tool: [-135, 0, -90], gripper: closed}
+  - {at: platform, offset: [-0.16, 0, 0.20], tool: [-135, 0, -90], gripper: closed}
+  - {at: platform, offset: [-0.22, 0, 0.20], tool: [-135, 0, -90], gripper: closed}
+knobs: {card_thickness: 0.001, card_footprint: "0.14x0.10", platform_friction: 0.1, platform_height: 0.14, drag_distance: 0.10, overhang: 0.055}

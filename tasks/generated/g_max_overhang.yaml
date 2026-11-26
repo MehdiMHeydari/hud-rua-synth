@@ -1,0 +1,64 @@
+name: g_max_overhang
+prompt: >-
+  Four identical blocks, each 14 cm long, 4 cm wide and 3 cm tall (blue, green, yellow and red), lie
+  flat on the table beside an 8 cm high platform. Stack all four on the platform, one on top of
+  another, with the red block on top. The red block must stick out toward the robot past the
+  platform's edge nearest the robot: its far end must reach at least 11.5 cm horizontally beyond
+  that edge. Its underside must end at least 16 cm above the table, so it sits on the other three.
+  When you finish, the stack must stand on its own: nothing held, nothing tipping or falling.
+# Single-column harmonic-style stack. Platform yaw 180, so its +x face (the one `overhang` measures)
+# faces the robot (-x world), and platform-frame +x points toward the robot. Edge at local x = +0.10.
+# The platform body origin is at its base: `overhang` tests pos.z > plat.z + size_z. So its top is at
+# local z = +0.08, not +0.04. v1/v2 aimed the drops 4 cm too low, and the carried block hit the
+# platform (step 5 stopped 3 cm short; the robust gate failed on the same step).
+# `lifted` (red bottom > 0.16 m; 0.17 on three blocks, 0.14 on two) forces red onto the 4th layer,
+# so one block per layer. The perfect limit is 0.07 * H4 = 0.146 m.
+# Margins (top to bottom): 14, 13, 12 mm on block-on-block centre-of-mass conditions. Worst relative
+# error between two 5 mm placements is 10 mm. The whole-stack COM vs edge gets 7 mm (an average of
+# four errors). Centres past the edge: -0.0505, -0.0305, -0.0015, +0.0545.
+# Red's far end reaches 0.1245 m, 9.5 mm over the 0.115 needed.
+# Layer centres (abs): 0.095, 0.125, 0.155, 0.185. Drops are 5 mm above those.
+oracle:
+  - {at: b1, offset: [0, 0, 0.15], gripper: open}
+  - {at: b1, gripper: open}
+  - {at: b1, gripper: closed}
+  - {at: b1, offset: [0, 0, 0.22], gripper: closed}
+  - {at: platform, offset: [0.0495, 0, 0.24], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.0495, 0, 0.10], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.0495, 0, 0.10], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.0495, 0, 0.24], yaw: 180, gripper: open}
+  - {at: b2, offset: [0, 0, 0.15], gripper: open}
+  - {at: b2, gripper: open}
+  - {at: b2, gripper: closed}
+  - {at: b2, offset: [0, 0, 0.22], gripper: closed}
+  - {at: platform, offset: [0.0695, 0, 0.24], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.0695, 0, 0.13], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.0695, 0, 0.13], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.0695, 0, 0.24], yaw: 180, gripper: open}
+  - {at: b3, offset: [0, 0, 0.15], gripper: open}
+  - {at: b3, gripper: open}
+  - {at: b3, gripper: closed}
+  - {at: b3, offset: [0, 0, 0.22], gripper: closed}
+  - {at: platform, offset: [0.0985, 0, 0.24], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.0985, 0, 0.16], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.0985, 0, 0.16], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.0985, 0, 0.24], yaw: 180, gripper: open}
+  - {at: red, offset: [0, 0, 0.15], gripper: open}
+  - {at: red, gripper: open}
+  - {at: red, gripper: closed}
+  - {at: red, offset: [0, 0, 0.22], gripper: closed}
+  - {at: platform, offset: [0.1545, 0, 0.26], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.1545, 0, 0.19], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.1545, 0, 0.19], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.1545, 0, 0.26], yaw: 180, gripper: open}
+objects:
+  - {name: platform, shape: platform, size: [0.20, 0.20, 0.08], color: wood,
+     x: [0.59, 0.61], y: [-0.03, 0.03], yaw: [180, 180]}
+  - {name: b1, shape: box, size: [0.14, 0.04, 0.03], color: blue, x: [0.40, 0.46], y: [0.20, 0.24]}
+  - {name: b2, shape: box, size: [0.14, 0.04, 0.03], color: green, x: [0.40, 0.46], y: [-0.24, -0.20]}
+  - {name: b3, shape: box, size: [0.14, 0.04, 0.03], color: yellow, x: [0.62, 0.68], y: [0.25, 0.29]}
+  - {name: red, shape: box, size: [0.14, 0.04, 0.03], color: red, x: [0.62, 0.68], y: [-0.29, -0.25]}
+success:
+  overhang: {object: red, platform: platform, beyond: 0.115}
+  lifted: {object: red, height: 0.16}
+knobs: {blocks: 4, beyond: 0.115, harmonic_limit: 0.146, reach_margin: 0.0095, platform_height: 0.08}

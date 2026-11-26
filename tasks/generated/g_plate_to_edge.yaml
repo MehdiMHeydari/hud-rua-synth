@@ -1,0 +1,41 @@
+name: g_plate_to_edge
+prompt: >-
+  A white round plate, 15 cm across and 2.5 cm thick, lies flat on top of a 12 cm tall wooden platform.
+  The plate is too wide for the gripper to open around. Pick the plate up and hold it in the gripper so
+  that its bottom is at least 20 cm above the table, which is 8 cm above the platform's top. Keep
+  holding it when you finish.
+# Intent: the plate can't be grasped across its width, and a straight-down pinch of its rim is blocked
+# by the platform top under it. The solution is to slide the plate toward the robot until its rim
+# overhangs the platform's near (-x) face, then pinch the overhanging rim and lift.
+# Edge pinch with tool [-135, 0, -90]: fingers forward and 45 deg down. With the jaws open, the lower
+# finger passes under the overhang and the upper finger over the top. Closing squeezes the rim edge.
+# v5: the plate hangs from a rim pinch and sags toward vertical. At a 14 cm lift its bottom ended at
+# 19.95 cm (just short), and shallower pinches from a 5 mm error sagged more. Changes: the pinch is
+# 5 mm deeper (2.5 cm past the rim, lower fingertip still at least 1.5 cm short of the face), and the
+# lift goes up then back toward the robot to TCP z 0.31. Hanging straight down from the pinch, the
+# plate's bottom is then still at about 0.25 m.
+# Geometry: the plate starts at x 0.69-0.70, near rim 2-3 cm inside the face (x 0.595), far rim at
+# most 0.775. The fingers push 7 cm from the far rim. The rim then overhangs by 4-5 cm and the plate's
+# centre stays 2.5-3.5 cm inside the face.
+objects:
+  - {name: platform, shape: platform, size: [0.22, 0.44, 0.12], color: wood, x: [0.705, 0.705], y: [0.0, 0.0]}
+  - {name: plate, shape: cylinder, size: [0.15, 0.025], color: white, mass: 0.1, z: 0.12,
+     x: [0.69, 0.70], y: [-0.04, 0.04]}
+success:
+  lifted: {object: plate, height: 0.20}
+oracle:
+  # push the plate toward the robot with closed fingers against its far rim
+  - {at: plate, offset: [0.10, 0, 0.10], gripper: closed}
+  - {at: plate, offset: [0.10, 0, 0.005], gripper: closed}
+  - {at: plate, offset: [0.015, 0, 0.005], gripper: closed}
+  - {at: plate, offset: [0.015, 0, 0.10], gripper: closed}
+  # move over the approach spot straight down, then tilt into the edge pinch
+  - {at: plate, offset: [-0.17, 0, 0.10], gripper: closed}
+  - {at: plate, offset: [-0.20, 0, 0.06], tool: [-135, 0, -90], gripper: open}
+  - {at: plate, offset: [-0.20, 0, 0.0], tool: [-135, 0, -90], gripper: open}
+  - {at: plate, offset: [-0.12, 0, 0.0], tool: [-135, 0, -90], gripper: open}
+  - {at: plate, offset: [-0.12, 0, 0.0], tool: [-135, 0, -90], gripper: closed}
+  # lift clear of the platform, then up and back toward the robot
+  - {at: plate, offset: [-0.12, 0, 0.10], tool: [-135, 0, -90], gripper: closed}
+  - {at: plate, offset: [-0.15, 0, 0.18], tool: [-135, 0, -90], gripper: closed}
+knobs: {plate_diameter: 0.15, platform_height: 0.12, start_rim_inset: 0.025, distractors: 0}

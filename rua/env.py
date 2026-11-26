@@ -76,7 +76,9 @@ GraspControl(
         "is at the origin on the table top (z=0). +x is forward from the base, +y is the robot's "
         "left, +z up. Gripper straight down is roll=pi (same as -pi), pitch=0; roll=0 points it up. "
         "positive yaw turns the gripper counter-clockwise seen from above. At yaw 0 the fingers "
-        "close along y (left-right); at yaw +-pi/2 they close along x (forward-back). gripper: 1 open, 0 closed (values >= 0.5 open, "
+        "close along y (left-right); at yaw +-pi/2 they close along x (forward-back). yaw and yaw+pi are the same grasp, so "
+        "prefer yaw within +-pi/2; the wrist cannot turn through yaw -2.0 to -2.5, so to turn a held object end-for-end go "
+        "from yaw -pi/2 to +pi/2. gripper: 1 open, 0 closed (values >= 0.5 open, "
         "below close fully); "
         "the state's gripper value is how open the fingers are (1 open, 0 shut). "
         + " ".join(CAMERA_NOTES[c] for c in CAMERAS)

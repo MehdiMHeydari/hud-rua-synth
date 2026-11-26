@@ -1,0 +1,49 @@
+name: g_hidden_weight
+prompt: >-
+  Two identical-looking blue bars (20 cm long, 5 cm wide, 4 cm tall) lie flat on the table. A white
+  platform 8 cm tall stands in front of the robot's right side. Each bar hides a lead weight inside
+  one of its ends. You cannot see which end is the heavy one, and it may differ between the bars.
+  Put both bars on top of the platform, lying flat, so that each bar sticks out at least 8 cm past the
+  platform's left edge (the platform edge on the robot's left side). Both bars must stay there on
+  their own after you let go.
+# Overhang direction: the platform is turned 90 deg, so its +x face (the overhang edge) faces +y,
+# the robot's left.
+# Hiding: the lead sits at each bar's own +x end. Bar yaw is drawn from -90..90 deg, so the heavy end
+# points to the robot's left or right at random, and placing a bar with the smallest rotation hangs
+# the heavy end out about half the time.
+# Why this yaw range: it keeps every tool yaw in -90..90. The oracle grasps at the bar's yaw and
+# releases at -90, so it never crosses the +-180 wrap that stalled v1.
+# Physics:
+# - Heavy end out: the CoM is at least ~3.4 cm past the edge (0.15 kg lead vs 0.1 kg bar), so the
+#   bar tips off for any overhang of 8 cm or more.
+# - Light end out: the CoM is ~5.4 cm behind the bar's centre, so it balances up to ~15 cm overhang.
+#   The oracle uses 11 cm, its centre 1 cm past the edge, grasped 4 cm toward the heavy end.
+objects:
+  - {name: platform, shape: platform, size: [0.20, 0.30, 0.08], color: white,
+     x: [0.49, 0.51], y: [-0.16, -0.14], yaw: [90, 90]}
+  - {name: bar_a, shape: box, size: [0.20, 0.05, 0.04], color: blue, mass: 0.1, weight: 0.15,
+     x: [0.36, 0.40], y: [0.25, 0.30], yaw: [-90, 90]}
+  - {name: bar_b, shape: box, size: [0.20, 0.05, 0.04], color: blue, mass: 0.1, weight: 0.15,
+     x: [0.64, 0.68], y: [0.25, 0.30], yaw: [-90, 90]}
+success:
+  overhang:
+    - {object: bar_a, platform: platform, beyond: 0.08}
+    - {object: bar_b, platform: platform, beyond: 0.08}
+oracle:
+  - {at: bar_a, offset: [0.04, 0, 0.15], gripper: open}
+  - {at: bar_a, offset: [0.04, 0, 0], gripper: open}
+  - {at: bar_a, offset: [0.04, 0, 0], gripper: closed}
+  - {at: bar_a, offset: [0.04, 0, 0.15], gripper: closed}
+  - {at: platform, offset: [0.07, 0.07, 0.22], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.07, 0.07, 0.105], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.07, 0.07, 0.105], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.07, 0.07, 0.22], yaw: 180, gripper: open}
+  - {at: bar_b, offset: [0.04, 0, 0.15], gripper: open}
+  - {at: bar_b, offset: [0.04, 0, 0], gripper: open}
+  - {at: bar_b, offset: [0.04, 0, 0], gripper: closed}
+  - {at: bar_b, offset: [0.04, 0, 0.15], gripper: closed}
+  - {at: platform, offset: [0.07, -0.07, 0.22], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.07, -0.07, 0.105], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.07, -0.07, 0.105], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.07, -0.07, 0.22], yaw: 180, gripper: open}
+knobs: {lead_kg: 0.15, bar_kg: 0.1, beyond: 0.08, platform_height: 0.08, bars: 2, bar_yaw_spread: 180}

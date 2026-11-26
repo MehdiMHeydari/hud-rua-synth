@@ -186,7 +186,25 @@ class Sim:
         return self.task.is_success(self, answer)
 
     def _solve_ik(self, target: mink.SE3) -> np.ndarray:
-        self.ik.update(self.data.qpos)
+        """Joint targets for a tool pose. If the solve from the current posture ends off target (the
+        wrist joint, +-2.9 rad, hit its limit on the way: a yaw turn through about -2.0 rad left the
+        arm contorted and unable to move again, 10 of 17 hidden_weight failures), solve again from
+        the home posture with the wrist on either side and keep the best, so a jam is never permanent."""
+        best, best_err = None, np.inf
+        for wrist in (None, self.home[6], -2.4, 2.4):
+            q0 = self.data.qpos.copy()
+            if wrist is not None:
+                q0[:7] = self.home[:7]
+                q0[6] = wrist
+            q, err = self._ik_from(q0, target)
+            if err < best_err:
+                best, best_err = q, err
+            if best_err < 0.02:
+                break
+        return best
+
+    def _ik_from(self, q0: np.ndarray, target: mink.SE3) -> tuple[np.ndarray, float]:
+        self.ik.update(q0)
         task = mink.FrameTask("tcp", "site", position_cost=1.0, orientation_cost=0.5)
         task.set_target(target)
         # Anchor the arm's spare freedom to a fixed pose; anchoring to "wherever it is now" let the
@@ -199,7 +217,8 @@ class Sim:
             self.ik.integrate_inplace(v, 0.02)
             if np.linalg.norm(task.compute_error(self.ik)[:3]) < 1e-3:
                 break
-        return self.ik.q[:7].copy()
+        err = task.compute_error(self.ik)
+        return self.ik.q[:7].copy(), float(np.linalg.norm(err[:3]) + 0.1 * np.linalg.norm(err[3:]))
 
     def _render(self, camera: str) -> np.ndarray:
         self.renderer.update_scene(self.data, camera=camera)
