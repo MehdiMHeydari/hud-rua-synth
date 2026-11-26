@@ -12,7 +12,7 @@ One task shows this clearly. The robot has to stack blocks on a ledge so the top
 
 **I started from what the literature says agents get wrong.** Recent studies put frontier models at 40-50% on standard manipulation suites: Astra scores 44% on LIBERO-10 (at high effort) and 49.8% on RoboARCade. They name the same weak spots: precise placement, multi-step tasks, and claiming success that didn't happen (24-39% of subtasks in RoboARCade). So my first seven tasks covered those: drawers, ordered stacking, peg insertion, a hook tool, and placing things in another person's left and right. I tuned each to 15-30% on sol.
 
-**Then two things changed the plan.** Lukass pointed out that labs already train on standard manipulation, and asked for tasks outside pick-and-place. And when I ran Astra on the seven, it scored 40-100%. The standard families were no longer hard.
+**Then two things changed the plan.** After our first sync I stopped building standard manipulation tasks, since labs already train on those, and looked outside pick-and-place. Then I ran Astra on the seven and it scored 40-100%. The standard families were no longer hard.
 
 **So I asked what the literature says is not improving.** RoboARCade reports that failures come "mostly from choosing a poor manipulation strategy or executing a good one imprecisely, rarely from misunderstanding the scene". The Bitter Lesson study on real arms describes trials ending on an unrecoverable error, such as knocking an object off the table. A teammate in my lab said the same from experience: fast, contact-rich manipulation is where these agents break.
 

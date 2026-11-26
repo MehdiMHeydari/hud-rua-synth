@@ -59,7 +59,7 @@ Two choices inside that table:
 
 Each model run also reports three counts: failures that hit the step cap, failures where the arm jammed, and failures that stopped just short of the step budget. A low score is not read as "hard" until the first two are zero and the third has been read.
 
-**On the target difficulty.** The brief asks for tasks an agent passes 5-30% of the time. I checked with Lukass: the band is measured on Astra, the exact range matters less than the reason behind a failure, and for this project lower is better. So a task at 0% stays in the set if the traces show an honest failure, and I spent the effort on proving the failures are real. For sample size, simple binomial arithmetic says 10 episodes cannot tell 5% from 30%, so the sol calibrations used 20 or more.
+**On the target difficulty.** The brief asks for tasks an agent passes 5-30% of the time. As we discussed, I measured it on Astra and treated the range as a guide: lower is fine for this project as long as the failure is real. So a task at 0% stays in the set if the traces show an honest failure, and I spent the effort on proving the failures are real. For sample size, simple binomial arithmetic says 10 episodes cannot tell 5% from 30%, so the sol calibrations used 20 or more.
 
 ## Harness
 
