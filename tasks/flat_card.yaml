@@ -1,0 +1,29 @@
+name: flat_card
+prompt: >-
+  A thin red card (12 x 6 cm, 1 mm thick) lies flat on top of a white ledge 8 cm high. Pick it up and
+  hold it so its centre is at least 20 cm above the table (12 cm above the ledge top).
+objects:
+  # Ledge edge faces the robot (yaw 180: its +x face is world x 0.56), so an overhang hangs into reachable space.
+  - {name: ledge, shape: platform, size: [0.20, 0.20, 0.08], color: white, friction: 0.15, x: [0.665, 0.665], y: [-0.01, 0.01], yaw: [180, 180]}
+  - {name: card, shape: box, size: [0.12, 0.06, 0.001], color: red, mass: 0.02, friction: 0.15, z: 0.08,
+     x: [0.66, 0.67], y: [-0.03, 0.03], yaw: [-10, 10]}
+success:
+  lifted: {object: card, height: 0.20}
+# Fits between the fingers (6 < 8 cm open) but is too thin to pinch where it lies: a top-down pinch
+# scored 0/25 (5 seeds x tcp -5..+10 mm from its centre); a 2 mm card was pinchable (pads ~0.8 cm below
+# the tcp reach the surface), and pushing a 1 mm edge slipped under the soft finger contact (5.5 cm per
+# 10 cm). So the route is a fingertip press-and-drag toward the robot until ~4.8 cm hang past the face
+# (centre ~1.5-2.5 cm behind it, so it doesn't tip), then a top-down pinch of the overhang across its
+# width, pads below the card, and lift. Ledge and card friction 0.15 (MuJoCo takes the larger of two
+# geoms' friction, so finger-card stays 1): at the default 1 everywhere a dragging fingertip can't beat
+# the card's friction on the ledge, which no real desk does.
+oracle:
+  - {at: card, offset: [0.03, 0, 0.08], gripper: closed}
+  - {at: card, offset: [0.03, 0, 0.006], gripper: closed}
+  - {at: card, offset: [-0.065, 0, 0.006], gripper: closed}
+  - {at: card, offset: [-0.065, 0, 0.10], gripper: closed}
+  - {at: card, offset: [-0.125, 0, 0.10], gripper: open}
+  - {at: card, offset: [-0.125, 0, -0.005], gripper: open}
+  - {at: card, offset: [-0.125, 0, -0.005], gripper: closed}
+  - {at: card, offset: [-0.125, 0, 0.22], gripper: closed}
+knobs: {card_mm: 1, card_cm: "12x6", ledge_height_cm: 8, ledge_friction: 0.15, drag_cm: 9.5}

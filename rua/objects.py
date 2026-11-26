@@ -73,7 +73,8 @@ def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mas
         _add_seesaw(spec, name, size, rgba, mass, pivot, damping)
     elif shape == "platform":  # a solid fixed box, e.g. a ledge to slide things over
         spec.worldbody.add_body(name=name).add_geom(type=GEOMS["box"], size=[v / 2 for v in size],
-                                                    pos=[0, 0, size[2] / 2], rgba=rgba)
+                                                    pos=[0, 0, size[2] / 2], rgba=rgba,
+                                                    friction=[friction, 0.005, 0.0001])  # MuJoCo's default at 1
     elif shape == "zone":
         # Paint on the table: contype/conaffinity 0 so it is seen but never touched. [d] circle, [x, y] rectangle.
         kind, half = ("cylinder", [size[0] / 2]) if len(size) == 1 else ("box", [size[0] / 2, size[1] / 2])

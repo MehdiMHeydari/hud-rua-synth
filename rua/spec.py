@@ -29,7 +29,7 @@ class Obj(BaseModel):
     # hook: [handle length, crossbar length, thickness]; asset: filled from its catalog card (bbox), never set
     color: Literal[tuple(COLORS)] | None = None  # required except for assets (textured)
     mass: float = 0.1  # asset: defaults to its card's mass
-    friction: float = 1.0  # primitives only (MuJoCo uses the larger of two touching geoms', so it also sets grip)
+    friction: float = 1.0  # primitives and platforms only (MuJoCo uses the larger of two touching geoms', so it also sets grip)
     asset: str | None = None  # asset only: a catalog id (assets/catalog.yaml)
     x: tuple[float, float]  # placement range on the table, sampled per seed
     y: tuple[float, float]
