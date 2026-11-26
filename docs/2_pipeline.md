@@ -76,7 +76,7 @@ What the agent sees and does matters as much as the model. JustRUA raised one be
 | Grading on the final state, hidden from the agent | Models claim success on 24-39% of unfinished subtasks (RoboARCade), so the agent's word cannot be the grade |
 | MuJoCo with the Menagerie Panda and mink IK, moves interpolated | A local benchmark showed that commanding a pose as one jump dropped a held cube, and interpolating kept it |
 
-## The five tasks
+## The tasks
 
 | Task | Spec | Generator | Astra | Rollouts |
 |---|---|---|---|---|
@@ -98,12 +98,15 @@ It produced four of the five, and each of its versions passes every check and ha
 | overhang_or_impossible | 3 of 5 | 4 of 5 | [job](https://www.hud.ai/jobs/26809c2e12d74ea2993f5df18e8b6997) |
 | balance_sort | 1 of 12 | 0 of 5 | [job](https://www.hud.ai/jobs/96f6599ff40b4ce398c4982e7e2e3f99) |
 | balance_pick | 1 of 5 | 4 of 5 | [job](https://www.hud.ai/jobs/394a6c07ec5b4cb58509f3ba4d0c7d13) |
+| hidden_weight | not in my five | 2 of 5, and 3 more lost to arm jams | [job](https://www.hud.ai/jobs/1b5de27bef1b458cbf247661b350de81) |
 
 Three of the four came out about as hard as mine. The generator also made its own choices along the way: it colour-coded the circles in one balance_sort version where I used left-to-right order, and it added a height check to max_overhang that I hadn't thought of.
 
 balance_pick came out much easier, and the reason is useful. The generator built a gentler seesaw: the pivot is half as high, so the plank tilts less, and the swing is damped ten times more. My version's difficulty was cubes sliding off a plank that tips sharply, and the generated one mostly removed that. So the difficulty of a task can sit in a few physical numbers that the one-line intent never mentions. This is what the calibration step is for: run on Astra, a version this easy would go back to the generator rather than into the library.
 
 Getting the balance tasks right took one fix. The generator's first versions laid the plank lengthways, which made Astra turn its wrist a quarter turn about three times per attempt and set off the wrist jam described in doc 3 in 6 of 10 attempts. I added one line to the generator's instructions, to lay long objects crossways. The next versions did, and Astra's arm did not jam once in 10 attempts.
+
+That makes five tasks the generator created on its own and that have Astra rollouts: max_overhang, overhang_or_impossible, balance_sort, balance_pick and hidden_weight. hidden_weight is the weakest of them. Two blocks each hide a weight at one end and have to overhang a ledge, and the attempts the arm jam didn't spoil were both successes, so it is probably not hard for Astra. I kept weighted_overhang as a sixth task because it is the hardest result I have, 0 of 12.
 
 The one task the generator could not produce was weighted_overhang. Its scripted solution has to stack four off-centre blocks so that the tower still stands when every placement is 5 mm off. It did not find one in the rounds I gave it. Writing scripted solutions for physically delicate tasks is the generator's weak point, and doc 3 comes back to it.
 
