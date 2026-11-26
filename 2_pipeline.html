@@ -386,7 +386,7 @@ a held cube, and interpolating kept it</td>
 </tr>
 </tbody>
 </table>
-<h2 id="the-five-tasks">The five tasks</h2>
+<h2 id="the-tasks">The tasks</h2>
 <table>
 <thead>
 <tr>
@@ -507,6 +507,13 @@ href="https://www.hud.ai/jobs/96f6599ff40b4ce398c4982e7e2e3f99">job</a></td>
 <td><a
 href="https://www.hud.ai/jobs/394a6c07ec5b4cb58509f3ba4d0c7d13">job</a></td>
 </tr>
+<tr>
+<td>hidden_weight</td>
+<td>not in my five</td>
+<td>2 of 5, and 3 more lost to arm jams</td>
+<td><a
+href="https://www.hud.ai/jobs/1b5de27bef1b458cbf247661b350de81">job</a></td>
+</tr>
 </tbody>
 </table>
 <p>Three of the four came out about as hard as mine. The generator also
@@ -527,6 +534,13 @@ quarter turn about three times per attempt and set off the wrist jam
 described in doc 3 in 6 of 10 attempts. I added one line to the
 generator's instructions, to lay long objects crossways. The next
 versions did, and Astra's arm did not jam once in 10 attempts.</p>
+<p>That makes five tasks the generator created on its own and that have
+Astra rollouts: max_overhang, overhang_or_impossible, balance_sort,
+balance_pick and hidden_weight. hidden_weight is the weakest of them.
+Two blocks each hide a weight at one end and have to overhang a ledge,
+and the attempts the arm jam didn't spoil were both successes, so it is
+probably not hard for Astra. I kept weighted_overhang as a sixth task
+because it is the hardest result I have, 0 of 12.</p>
 <p>The one task the generator could not produce was weighted_overhang.
 Its scripted solution has to stack four off-centre blocks so that the
 tower still stands when every placement is 5 mm off. It did not find one
