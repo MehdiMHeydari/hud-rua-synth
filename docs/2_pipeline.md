@@ -109,13 +109,13 @@ To run one: `TASK=max_overhang HUD_LLM_MODEL=gpt-6-astra STEPS=60 EPISODES=5 pyt
 
 ## What I turned down
 
-| Instead of | I chose | Because |
+| The other option | What I did | Why |
 |---|---|---|
-| LLM-written scene code | A YAML spec built by fixed code | Placement and asset errors dominate generated code (AnyTask, GenSim, RoboGen) |
-| Open asset generation | A closed, tested set | Bottom-up composition from known parts works better (GenSim2) |
-| A vision model as judge | Coded checks plus one human look | VLM judges are unreliable (RoboTwin 2.0) |
-| Trusting a model's success as proof a task works | A scripted solution through the real tool | A model's failure can't tell you whether the task or the model is broken |
-| Rewards along the way | Final-state grading | It can't be gamed by passing through the goal |
+| Have the model write the simulation code for each task, as most earlier systems do | The model fills in a short description of the task (which objects, where they can start, what counts as success). Code I wrote once turns that description into the scene | When models write the scene code themselves, it usually runs but puts objects in the wrong place or uses objects that don't exist. AnyTask, GenSim and RoboGen all report this as their most common failure. A description can be checked line by line before anything is simulated |
+| Let the model invent any object it wants | The model picks from a fixed list of objects that I have each tested | GenSim2 found that building tasks out of parts already known to work succeeds more often than letting the model design from scratch (0.68 against 0.54) |
+| Use a vision model to look at the result and judge whether the task is good | Checks written in code, plus one look by a person before a task is accepted | Vision models are poor judges here. In RoboTwin 2.0 the judge called misaligned stacks a success |
+| Treat "a model solved it" as proof that the task works | Every task comes with a scripted solution that must succeed through the same tool the model uses | If a model fails a task, that alone can't tell you whether the model or the task is at fault. A scripted solution settles that before any model runs |
+| Give points for progress along the way | Grade only the final state of the table | A robot can pass through the goal position without ever finishing the task. Grading the end state can't be fooled that way |
 
 The full log of decisions is in `docs/decisions.md`.
 
