@@ -137,7 +137,7 @@ In my simulation, the world only moves while the arm is moving. Between moves, e
 
 The two newest tasks, balance_pick and overhang_or_impossible, have five attempts each. That is enough to see the pattern and not enough for a precise success rate.
 
-One result from real robots did not show up here. Robocurve found that Astra could not stand a lying bottle upright, 0 times in 20. In my simulation it stood a bar upright 5 times in 5. The reason is that a bar held at one end swings freely in my simulated gripper, which makes the task easy. A real gripper holds it stiffly.
+One result from real robots did not show up here. Robocurve found that Astra could not stand a lying bottle upright, 0 times in 20. In my simulation it stood a bar upright 5 times in 5. The reason is that a bar held at one end swings freely in my simulated gripper, which makes the task much easier than it is on a real robot.
 
 ## Sources
 
