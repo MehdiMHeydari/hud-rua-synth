@@ -88,7 +88,20 @@ What the agent sees and does matters as much as the model. JustRUA raised one be
 
 All five pass every free check, and the scripted solution works 5/5 through the real tool.
 
-I wrote all five specs by hand first, and the rollouts above ran on those. I then gave the generator a one-line intent for each. It rebuilt four of them, and its versions pass the same checks (`tasks/generated/`, waiting for approval). It failed on weighted_overhang after five rounds: it could not find a stack of off-centre blocks that still stands when every placement is 5 mm off. That is the hardest scripted solution of the five, and it took me several tries by hand too.
+I wrote all five specs by hand first, and the rollouts above ran on those. I then gave the generator a one-line intent for each. It rebuilt four of them, and its versions pass the same checks (`tasks/generated/`). It failed on weighted_overhang: it could not find a stack of off-centre blocks that still stands when every placement is 5 mm off. That is the hardest scripted solution of the five, and it took me several tries by hand too.
+
+**Does a generated task come out as hard as the hand-written one?** I ran Astra on the four generated versions, five episodes each.
+
+| Task | Hand-written | Generated | Rollouts |
+|---|---|---|---|
+| max_overhang | 5/18 | 2/5 | [job](https://www.hud.ai/jobs/ca298106a4f94f63b5dd32a207e521b8) |
+| overhang_or_impossible | 3/5 | 4/5 | [job](https://www.hud.ai/jobs/26809c2e12d74ea2993f5df18e8b6997) |
+| balance_pick | 1/5 | 0/5, but 3 failures were arm jams | [job](https://www.hud.ai/jobs/bbf975219b774c63afb9dde9718a28a3) |
+| balance_sort | 1/12 | 0/5, but 3 failures were arm jams | [job](https://www.hud.ai/jobs/005339631d47433f8a4049e841b88dc4) |
+
+The two stacking tasks came out about the same. The two balance tasks did not come out clean. The generator put the plank lengthways, pointing away from the robot, so its far end sits at the edge of the arm's reach, and Astra's arm jammed there in 6 of 10 episodes. My version has the plank crossways with both ends in easy reach, and never jammed.
+
+No check caught this, and the reason is worth knowing. The scripted solution for the balance tasks already knows the weights, so it never touches the balance. A check built on that solution cannot notice that the balance is hard to reach. The fix is a scripted solution that has to use the balance, which I wrote for balance_sort by hand and the generator does not yet produce.
 
 To run one: `TASK=max_overhang HUD_LLM_MODEL=gpt-6-astra STEPS=60 EPISODES=5 python rua/run.py`
 
