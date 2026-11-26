@@ -56,7 +56,7 @@ python rua/generate.py --approve NAME
 
 These two files are my lab notebook. They are long and unpolished, and I left them in on purpose.
 
-- `docs/findings.md` has every result in the order it happened. Five times an earlier claim turned out to be wrong, and the corrections are marked.
+- `docs/findings.md` has every result in the order it happened.
 - `docs/decisions.md` has every design decision, why I made it, and what I turned down.
 
 The literature reviews behind the design are in `reports/`.
