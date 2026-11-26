@@ -2,7 +2,7 @@
 
 ## Cost per rollout
 
-Keeping rollouts cheap shaped most of the design. The brief warns that a careless Astra rollout runs 150+ steps and about $60. Ours cost under a dollar.
+Keeping rollouts cheap shaped most of the design. The brief warns that a careless Astra rollout runs 150+ steps and about $60. Mine cost under a dollar.
 
 | | Cost | Settings |
 |---|---|---|
@@ -12,15 +12,15 @@ Keeping rollouts cheap shaped most of the design. The brief warns that a careles
 | Generating one task | $0.15 to $1.15 | 1 to 5 rounds |
 | Every check, the scripted solution, every replay | $0 | Runs locally on a laptop CPU |
 
-These are estimates from our run log. Exact figures are on HUD's Usage page.
+These are estimates from my run log. Exact figures are on HUD's Usage page.
 
 How the cost stayed down:
 
-- **Cheap models first.** luna and sol found the harness bugs. All eight of luna's first failures turned out to be our fault, and finding that cost cents.
+- **Cheap models first.** luna and sol found the harness bugs. All eight of luna's first failures turned out to be my fault, and finding that cost cents.
 - **Free checks before any paid run.** A task has to pass about ten checks and a scripted solution before a model sees it.
 - **Small screens.** Three to five Astra episodes show whether a task is worth more. Only tasks that survive get a larger run.
 - **Short episodes.** A 60-step cap, two small images per step, five episodes in parallel.
-- **Replays in place of reruns.** Checking whether a failure was ours meant replaying the recorded moves locally, which is free.
+- **Replays in place of reruns.** Checking whether a failure was my fault meant replaying the recorded moves locally, which is free.
 
 What a bigger budget would buy:
 
@@ -29,16 +29,16 @@ What a bigger budget would buy:
 - **A side camera.** Astra misjudged an overhang by 5 mm from the top view, and height is hard to read from above. I did not test a third camera.
 - **Larger images and higher effort.** I tried both on one task (480 px, high effort) and saw no clear change, 6/8 against 9/15. I would not spend here first.
 
-## The main lesson: most low scores were our fault
+## The main lesson: most low scores were my fault
 
 Six tasks looked hard for Astra. Three did not survive checking.
 
 The literature warned me, and I still underestimated it. JustRUA moved a benchmark score from 29.7 to 50.3 by changing only the harness, which is as much as a model generation. OpenAI found flawed tests in 59% of the SWE-bench Verified problems its model kept failing. I built the truth test early for that reason, and it caught the early bugs. It did not catch the ones below, because they only appear when an agent does something the scripted solution never does.
 
-| What we saw | What it was | After the fix |
+| What I saw | What it was | After the fix |
 |---|---|---|
 | Astra says the drawer is closed and it isn't | The drawer slide had no friction and drifted open | 3/15 became 9/10 |
-| Many failures "hit the step cap" | Our counter also counted tool results as steps | Almost none did |
+| Many failures "hit the step cap" | My counter also counted tool results as steps | Almost none did |
 | loose_drawer 0/8 | The prompt never said the heavy block was there to use | 5/10 |
 | hidden_weight 1/10 | A wrist turn ran a joint into its stop and the arm stayed stuck | Unknown, between 10% and 60% |
 | plate_to_edge 0/5 | My fix for the jam jerked the arm during normal grasps | Reverted. 7/10 on clean episodes |
@@ -61,7 +61,7 @@ What also helped: a second model read the traces with no context and found the w
 - **One robot.** Franka only, one arm, a parallel gripper. The brief asks for embodiments as an input, and this pipeline does not have that yet. Adding one means a second arm in the scene builder and re-tuning every grasp check.
 - **Rigid objects only.** No bags, zippers, screw threads, or two-handed grips. That rules out most of Robocurve's six tasks.
 - **The wrist.** Tilted grasps stall, and the jam is flagged, not fixed.
-- **Pass or fail grading.** Robocurve scores partial progress by milestone. Ours gives no credit for a stack that stood 5 mm short.
+- **Pass or fail grading.** Robocurve scores partial progress by milestone. Mine gives no credit for a stack that stood 5 mm short.
 - **Sim and real disagree in places.** Standing an object upright is 0/20 for Astra on real robots and 5/5 here.
 - **Small samples.** Two of the five tasks have five episodes.
 

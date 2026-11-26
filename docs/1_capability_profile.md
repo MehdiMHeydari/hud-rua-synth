@@ -20,7 +20,7 @@ One task shows this clearly. The robot has to stack blocks on a ledge so the top
 
 **Last, I gave each hard task an easier sibling.** A low score alone doesn't say whether the model lacked the idea or the execution, so two of the five tasks exist only to answer that.
 
-**Robocurve's Six Easy Tasks came out on the last day**, after the stacking and balance tasks were built. Astra scores 0/36 there on real robots, and every failure is physical: a dropped key, a bottle cap that never threads, a backpack that slides instead of being held. It backed up the direction. I also built three tasks straight from it (bracing a loose drawer, picking up a thin card, standing a bar upright), and none of them held up as hard in our sim. Astra braces once the prompt is fair and stands the bar up 5/5, and the thin card turned out to be a quirk of the simulator's contact model.
+**Robocurve's Six Easy Tasks came out on the last day**, after the stacking and balance tasks were built. Astra scores 0/36 there on real robots, and every failure is physical: a dropped key, a bottle cap that never threads, a backpack that slides instead of being held. It backed up the direction. I also built three tasks straight from it (bracing a loose drawer, picking up a thin card, standing a bar upright), and none of them held up as hard in my sim. Astra braces once the prompt is fair and stands the bar up 5/5, and the thin card turned out to be a quirk of the simulator's contact model.
 
 ## The tasks one by one
 
@@ -66,8 +66,8 @@ The two siblings settle the question. balance_pick shows the trouble is handling
 
 I had to withdraw three results after checking them. They are listed here because they are the easiest mistakes to repeat.
 
-- **"Astra can't tell when it has failed."** The drawer in our sim had no friction, so it slid open after Astra closed it. With friction added, that task went from 3/15 to 9/10.
-- **"Astra can't find a hidden weight."** The 1/10 was mostly our arm jamming on a wrist turn. The true rate is somewhere between 10% and 60%.
+- **"Astra can't tell when it has failed."** The drawer in my sim had no friction, so it slid open after Astra closed it. With friction added, that task went from 3/15 to 9/10.
+- **"Astra can't find a hidden weight."** The 1/10 was mostly my simulated arm jamming on a wrist turn. The true rate is somewhere between 10% and 60%.
 - **"Astra never braces a loose object."** It scored 0/8 only while the prompt didn't mention the heavy block it could use. Once the prompt did, 5/10.
 
 ## Cheaper models
@@ -91,7 +91,7 @@ Not worth generating for Astra: selecting among objects, reference frames, plain
 
 - One robot, one arm, rigid objects, and a world that stands still between moves. The literature's clearest lasting gap is dynamic control (models act at about 0.3 Hz), and nothing here tests it.
 - The two newest tasks have 5 episodes each.
-- One real-robot result did not carry over. Standing a lying object upright is 0/20 for Astra at Robocurve and 5/5 in our sim, because a bar pinched at one end swings freely in our gripper.
+- One real-robot result did not carry over. Standing a lying object upright is 0/20 for Astra at Robocurve and 5/5 in my sim, because a bar pinched at one end swings freely in our gripper.
 
 ## References
 

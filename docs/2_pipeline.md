@@ -12,7 +12,7 @@ flowchart LR
     P -->|too easy or too hard| G
     P -->|hard enough| T{Read the traces<br/>and replay them}
     T -->|the model failed| L[(Task library)]
-    T -->|our harness failed| K[Fix it,<br/>add a free check]
+    T -->|my harness failed| K[Fix it,<br/>add a free check]
     K --> F
 ```
 
@@ -26,9 +26,9 @@ The model writes a YAML spec and nothing else: the objects, where they can start
 
 **Why a closed set of building blocks.** GenSim2 found that composing tasks from parts already known to work beats asking the LLM to break a task down from the top (0.68 against 0.54 solution rate). Each of our blocks is tested once and reused. The model cannot invent an asset.
 
-**Why failures go back with the exact reason, for up to five rounds.** RoboTwin 2.0 runs the same loop and needs 1.76 rounds on average. Ours took 1 to 5.
+**Why failures go back with the exact reason, for up to five rounds.** RoboTwin 2.0 runs the same loop and needs 1.76 rounds on average. Mine took 1 to 5.
 
-**Why a photo is an optional input.** The brief asks for it. `rua/intent.py` maps what it sees onto our building blocks and refuses anything that doesn't fit, so a photo can't smuggle in an object we have never tested.
+**Why a photo is an optional input.** The brief asks for it. `rua/intent.py` maps what it sees onto my building blocks and refuses anything that doesn't fit, so a photo can't smuggle in an object we have never tested.
 
 **What it can build.** Boxes, cylinders, spheres, a hook, a drawer, a block with a hole, a ledge, a seesaw, a box with a sliding lid, painted zones, and scanned household objects from a small catalog. Also hidden weights, slippery surfaces, seeds where the task is impossible, and goal images.
 
@@ -43,14 +43,14 @@ Cheapest checks run first. Anything that fails goes back with its reason.
 | Check | What it catches | Why it's there |
 |---|---|---|
 | Schema and prompt lint | Missing fields; a prompt that doesn't state the success threshold | An agent can't hit a threshold it was never told |
-| Settle, joints, reach, visible | Objects that fall at the start, a jammed drawer, things the hand can't reach or the camera can't see | Each one caught a real bug in our own scenes |
+| Settle, joints, reach, visible | Objects that fall at the start, a jammed drawer, things the hand can't reach or the camera can't see | Each one caught a real bug in my own scenes |
 | Trivial | Tasks that pass if the robot does nothing or moves at random | The missing negative control described above |
 | Oracle | The scripted solution works, in the sim and through the real tool | Standard practice (GenSim, GenSim2), with the addition that it must go through the same tool the agent uses |
-| Robust | The solution still works with every placement 5 mm off | Our tool only stops within about 1 cm. A peg task at 7 mm clearance passed the oracle, and sol's 0/10 on it measured our tool, not sol |
-| Truth test (15 checks) | Whether everything we tell the agent is true | All eight of luna's first failures were things we had told it wrong |
+| Robust | The solution still works with every placement 5 mm off | The tool only stops within about 1 cm. A peg task at 7 mm clearance passed the oracle, and sol's 0/10 on it measured my tool, not sol |
+| Truth test (15 checks) | Whether everything the agent is told is true | All eight of luna's first failures were things I had told it wrong |
 | Asset admission | A scanned object that can't be gripped, won't release, or doesn't rest flat | Same idea as the truth test, for objects |
 | Model run | How hard the task is for the target model | Only a model can measure difficulty |
-| Trace review and replay | Whether a failure is the model's or ours | See doc 3. Half our hard results failed this |
+| Trace review and replay | Whether a failure is the model's or mine | See doc 3. Half my hard results failed this |
 
 Two choices inside that table:
 
@@ -69,10 +69,10 @@ What the agent sees and does matters as much as the model. JustRUA raised one be
 |---|---|
 | `move_to` with absolute end-effector poses | JustRUA found relative targets do not beat absolute ones (33.9 against 38.0 overall). `move_joints` would make the model do the arm's geometry in its head, with no evidence that LLMs can. The SDK serves one motion tool per environment, so it would be a launch setting. I scoped it and did not build it |
 | Images after every move | Showing images only on request dropped success from 83% to 68.5% (PyRUA-Lean) |
-| Two cameras, top and wrist | More cameras are not reliably better: a third view changed scores by -3.6, +5.8 and +10.7 across three models (Anthropic). In our runs one angled camera left luna unable to judge depth, and the wrist view fixed it |
+| Two cameras, top and wrist | More cameras are not reliably better: a third view changed scores by -3.6, +5.8 and +10.7 across three models (Anthropic). In my runs one angled camera left luna unable to judge depth, and the wrist view fixed it |
 | A plain-words grasp line ("fingers met; nothing between them") | On real arms 32-64% of grasps close on nothing, depending on the model (Bitter Lesson) |
 | A line saying when a move stopped short | In the LIBERO-10 study arms reached only 64-72% of the commanded distance, and models could not work out why |
-| Full history, medium effort | Keeping the full episode history lifted JustRUA's score from 29.7 to 34.7, and it ran at medium effort. High effort changed nothing in our one test |
+| Full history, medium effort | Keeping the full episode history lifted JustRUA's score from 29.7 to 34.7, and it ran at medium effort. High effort changed nothing in my one test |
 | Grading on the final state, hidden from the agent | Models claim success on 24-39% of unfinished subtasks (RoboARCade), so the agent's word cannot be the grade |
 | MuJoCo with the Menagerie Panda and mink IK, moves interpolated | A local benchmark showed that commanding a pose as one jump dropped a held cube, and interpolating kept it |
 

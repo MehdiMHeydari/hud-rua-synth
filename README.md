@@ -26,7 +26,7 @@ Setup needs an Apple-silicon Mac with Python 3.11 or 3.12.
 Everything below except the Astra line is free.
 
 ```bash
-# Is everything we tell the agent true?
+# Is everything the agent is told true?
 python rua/checks.py
 
 # Run the free checks on one task
