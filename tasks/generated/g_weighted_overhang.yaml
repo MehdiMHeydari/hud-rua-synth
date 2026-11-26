@@ -6,25 +6,24 @@ prompt: >-
   top, so that the red block sticks out at least 15 cm past the platform edge that faces the robot.
   Measure to the red block's farthest corner, horizontally from that edge. The red block must stay
   up above the platform's top on its own, released and at rest.
-# Each block is 0.05 kg plus 0.10 kg of lead at its +x end. The platform is yawed 180 deg so that its
-# +x face, the one the overhang predicate measures from, faces the robot. Uniform 14 cm blocks top out
-# at 14.6 cm with 4 levels (zero margin), so 15 cm needs every block's heavy end inboard.
+# Each block is 0.05 kg plus 0.10 kg of lead at its +x end. The platform is yawed 180 deg so its +x
+# face, the one the overhang predicate measures from, faces the robot.
 #
-# v3 grasped at +4 cm (the intent's COM figure) and the red top block tipped off in every seed.
-# In seed 4 levels 1-3 were placed on target and robust passed 2/4 shifts, so red sat on the
-# tipping edge. That puts the simulated COM about 2 cm from centre, not 4.
-# v4 grasps at +2 cm and lays the stack out for a COM offset of 2 cm with 1.2 cm margins per level.
-# If the true offset is larger (up to 4 cm), every margin only grows, so the plan holds either way.
+# The simulated COM offset is about 2.2 cm from centre toward the lead, not the intent's 4 cm. Red
+# tipping points across v2-v4 put it at 1.7-2.3 cm: the lead geom sits about 3.3 cm out, not at the
+# tip. Uniform blocks still top out at 14.6 cm (zero margin); heavy end inboard allows about 19 cm.
 #
-# Outward from the edge, block centres are at -5.05, -2.45, +1.45 and +9.3 cm, heavy ends inboard.
-# The red corner reaches 16.3 cm. The TCP sits 2 cm inboard of each centre, giving platform-frame
-# x offsets of 0.030, 0.056, 0.095 and 0.173 (the edge is at 0.10).
-# The platform's origin is at table level, so z offsets are heights. Blocks are grasped 5 mm above
-# their centre and released 1 cm above rest, so the stack is never pressed down.
-# Block friction 1.5 firms up the grip and stops blocks skidding when they land.
+# Each block is grasped at its COM (+2.2 cm along its own x). Margins are sized to the placement
+# scatter seen in v3-v4: about 1 cm per block, combined from both blocks at each joint.
+# Margins: red on b3 2.0 cm; b3+red on b2 1.75; three on b1 1.6; whole stack on the platform 0.8.
+# The last is a mean over 4 placements, so its scatter is smaller.
+# Outward from the edge, centres are at -4.3, -1.7, +2.1 and +9.2 cm; the red corner reaches 16.2 cm.
+# TCP platform-frame x offsets: 0.035, 0.061, 0.099, 0.170 (edge at 0.10).
+# The platform origin is at table level. Blocks are grasped 5 mm above centre and released 7 mm
+# above rest. Block friction 1.5 firms up the grip and stops skids on landing.
 objects:
   - {name: platform, shape: platform, size: [0.20, 0.20, 0.08], color: white,
-     x: [0.62, 0.66], y: [-0.03, 0.03], yaw: [170, 190]}
+     x: [0.62, 0.66], y: [-0.03, 0.03], yaw: [175, 185]}
   - {name: b1, shape: box, size: [0.14, 0.04, 0.03], color: blue, mass: 0.05, weight: 0.10, friction: 1.5,
      x: [0.36, 0.40], y: [0.24, 0.29], yaw: [-180, 180]}
   - {name: b2, shape: box, size: [0.14, 0.04, 0.03], color: blue, mass: 0.05, weight: 0.10, friction: 1.5,
@@ -36,44 +35,44 @@ objects:
 success:
   overhang: {object: red, platform: platform, beyond: 0.15}
 oracle:
-  # level 1: b1, centre 5.05 cm inboard of the edge
-  - {at: b1, offset: [0.02, 0, 0.25], gripper: open}
-  - {at: b1, offset: [0.02, 0, 0.005], gripper: open}
-  - {at: b1, offset: [0.02, 0, 0.005], gripper: closed}
-  - {at: b1, offset: [0.02, 0, 0.25], gripper: closed}
-  - {at: platform, offset: [0.030, 0, 0.30], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.030, 0, 0.16], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.030, 0, 0.11], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.030, 0, 0.11], yaw: 180, gripper: open}
-  - {at: platform, offset: [0.030, 0, 0.30], yaw: 180, gripper: open}
-  # level 2: b2, centre 2.45 cm inboard
-  - {at: b2, offset: [0.02, 0, 0.25], gripper: open}
-  - {at: b2, offset: [0.02, 0, 0.005], gripper: open}
-  - {at: b2, offset: [0.02, 0, 0.005], gripper: closed}
-  - {at: b2, offset: [0.02, 0, 0.25], gripper: closed}
-  - {at: platform, offset: [0.056, 0, 0.30], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.056, 0, 0.19], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.056, 0, 0.14], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.056, 0, 0.14], yaw: 180, gripper: open}
-  - {at: platform, offset: [0.056, 0, 0.30], yaw: 180, gripper: open}
-  # level 3: b3, centre 1.45 cm out
-  - {at: b3, offset: [0.02, 0, 0.25], gripper: open}
-  - {at: b3, offset: [0.02, 0, 0.005], gripper: open}
-  - {at: b3, offset: [0.02, 0, 0.005], gripper: closed}
-  - {at: b3, offset: [0.02, 0, 0.25], gripper: closed}
-  - {at: platform, offset: [0.095, 0, 0.30], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.095, 0, 0.22], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.095, 0, 0.17], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.095, 0, 0.17], yaw: 180, gripper: open}
-  - {at: platform, offset: [0.095, 0, 0.30], yaw: 180, gripper: open}
-  # level 4: red, centre 9.3 cm out, corner at 16.3 cm
-  - {at: red, offset: [0.02, 0, 0.25], gripper: open}
-  - {at: red, offset: [0.02, 0, 0.005], gripper: open}
-  - {at: red, offset: [0.02, 0, 0.005], gripper: closed}
-  - {at: red, offset: [0.02, 0, 0.25], gripper: closed}
-  - {at: platform, offset: [0.173, 0, 0.30], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.173, 0, 0.25], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.173, 0, 0.20], yaw: 180, gripper: closed}
-  - {at: platform, offset: [0.173, 0, 0.20], yaw: 180, gripper: open}
-  - {at: platform, offset: [0.173, 0, 0.30], yaw: 180, gripper: open}
-knobs: {blocks: 4, lead_kg: 0.10, block_mass: 0.05, beyond: 0.15, oracle_margin: 0.012, com_offset_design: 0.02, uniform_max: 0.146}
+  # level 1: b1, centre 4.3 cm inboard of the edge
+  - {at: b1, offset: [0.022, 0, 0.25], gripper: open}
+  - {at: b1, offset: [0.022, 0, 0.005], gripper: open}
+  - {at: b1, offset: [0.022, 0, 0.005], gripper: closed}
+  - {at: b1, offset: [0.022, 0, 0.25], gripper: closed}
+  - {at: platform, offset: [0.035, 0, 0.30], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.035, 0, 0.16], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.035, 0, 0.107], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.035, 0, 0.107], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.035, 0, 0.30], yaw: 180, gripper: open}
+  # level 2: b2, centre 1.7 cm inboard
+  - {at: b2, offset: [0.022, 0, 0.25], gripper: open}
+  - {at: b2, offset: [0.022, 0, 0.005], gripper: open}
+  - {at: b2, offset: [0.022, 0, 0.005], gripper: closed}
+  - {at: b2, offset: [0.022, 0, 0.25], gripper: closed}
+  - {at: platform, offset: [0.061, 0, 0.30], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.061, 0, 0.19], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.061, 0, 0.137], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.061, 0, 0.137], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.061, 0, 0.30], yaw: 180, gripper: open}
+  # level 3: b3, centre 2.1 cm out
+  - {at: b3, offset: [0.022, 0, 0.25], gripper: open}
+  - {at: b3, offset: [0.022, 0, 0.005], gripper: open}
+  - {at: b3, offset: [0.022, 0, 0.005], gripper: closed}
+  - {at: b3, offset: [0.022, 0, 0.25], gripper: closed}
+  - {at: platform, offset: [0.099, 0, 0.30], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.099, 0, 0.22], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.099, 0, 0.167], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.099, 0, 0.167], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.099, 0, 0.30], yaw: 180, gripper: open}
+  # level 4: red, centre 9.2 cm out, corner at 16.2 cm
+  - {at: red, offset: [0.022, 0, 0.25], gripper: open}
+  - {at: red, offset: [0.022, 0, 0.005], gripper: open}
+  - {at: red, offset: [0.022, 0, 0.005], gripper: closed}
+  - {at: red, offset: [0.022, 0, 0.25], gripper: closed}
+  - {at: platform, offset: [0.170, 0, 0.30], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.170, 0, 0.25], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.170, 0, 0.197], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.170, 0, 0.197], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.170, 0, 0.30], yaw: 180, gripper: open}
+knobs: {blocks: 4, lead_kg: 0.10, block_mass: 0.05, beyond: 0.15, com_offset_design: 0.021, top_margin: 0.02, uniform_max: 0.146}

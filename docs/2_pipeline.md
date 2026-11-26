@@ -101,9 +101,9 @@ It produced four of the five, and each of its versions passes every check and ha
 
 The generated tasks came out about as hard as the hand-written ones. The generator also made its own choices along the way: it colour-coded the circles in balance_sort where I used left-to-right order, and it added a height check to max_overhang that I hadn't thought of.
 
-The two balance rows count two attempts each because the other three were lost to the wrist jam described in doc 3. The generator laid the plank lengthways where I had laid it crossways. That is a reasonable layout, but it makes Astra turn its wrist a quarter turn about three times per attempt, against about once in three attempts on my layout, and a quarter turn is what sets off the jam. So this is the arm's weak spot showing up under a new layout. I have added a line to the generator's instructions to lay long objects crossways.
+The two balance rows count two attempts each because the other three were lost to the wrist jam described in doc 3. The generator laid the plank lengthways where I had laid it crossways. That is a reasonable layout, but it makes Astra turn its wrist a quarter turn about three times per attempt, against about once in three attempts on my layout, and every jam came right after one of those turns. So this is the arm's weak spot showing up under a new layout. I have added a line to the generator's instructions to lay long objects crossways.
 
-The one task the generator could not produce was weighted_overhang. Its scripted solution has to stack four off-centre blocks so that the tower still stands when every placement is 5 mm off. The generator found stacks that stand, but none that survived that test in the rounds I gave it. Writing scripted solutions for physically delicate tasks is the generator's weak point, and doc 3 comes back to it.
+The one task the generator could not produce was weighted_overhang. Its scripted solution has to stack four off-centre blocks so that the tower still stands when every placement is 5 mm off. It did not find one in the rounds I gave it. Writing scripted solutions for physically delicate tasks is the generator's weak point, and doc 3 comes back to it.
 
 To run one: `TASK=max_overhang HUD_LLM_MODEL=gpt-6-astra STEPS=60 EPISODES=5 python rua/run.py`
 
