@@ -88,20 +88,22 @@ What the agent sees and does matters as much as the model. JustRUA raised one be
 
 All five pass every free check, and the scripted solution works 5/5 through the real tool.
 
-I wrote all five specs by hand first, and the rollouts above ran on those. I then gave the generator a one-line intent for each. It rebuilt four of them, and its versions pass the same checks (`tasks/generated/`). It failed on weighted_overhang: it could not find a stack of off-centre blocks that still stands when every placement is 5 mm off. That is the hardest scripted solution of the five, and it took me several tries by hand too.
+I wrote the five specs by hand first, and the rollouts above ran on those. Then I gave the generator one sentence for each and let it write its own version from scratch.
 
-**Does a generated task come out as hard as the hand-written one?** I ran Astra on the four generated versions, five episodes each.
+It produced four of the five, and each of its versions passes every check and has a working scripted solution (`tasks/generated/`). To see whether a generated task is as hard as mine, and not just a look-alike, I ran Astra on all four.
 
-| Task | Hand-written | Generated | Rollouts |
+| Task | Mine | Generated | Rollouts |
 |---|---|---|---|
-| max_overhang | 5/18 | 2/5 | [job](https://www.hud.ai/jobs/ca298106a4f94f63b5dd32a207e521b8) |
-| overhang_or_impossible | 3/5 | 4/5 | [job](https://www.hud.ai/jobs/26809c2e12d74ea2993f5df18e8b6997) |
-| balance_pick | 1/5 | 0/5, but 3 failures were arm jams | [job](https://www.hud.ai/jobs/bbf975219b774c63afb9dde9718a28a3) |
-| balance_sort | 1/12 | 0/5, but 3 failures were arm jams | [job](https://www.hud.ai/jobs/005339631d47433f8a4049e841b88dc4) |
+| max_overhang | 5 of 18 | 2 of 5 | [job](https://www.hud.ai/jobs/ca298106a4f94f63b5dd32a207e521b8) |
+| overhang_or_impossible | 3 of 5 | 4 of 5 | [job](https://www.hud.ai/jobs/26809c2e12d74ea2993f5df18e8b6997) |
+| balance_pick | 1 of 5 | 0 of 2 | [job](https://www.hud.ai/jobs/bbf975219b774c63afb9dde9718a28a3) |
+| balance_sort | 1 of 12 | 0 of 2 | [job](https://www.hud.ai/jobs/005339631d47433f8a4049e841b88dc4) |
 
-The two stacking tasks came out about the same. The two balance tasks did not come out clean. The generator put the plank lengthways, pointing away from the robot, so its far end sits at the edge of the arm's reach, and Astra's arm jammed there in 6 of 10 episodes. My version has the plank crossways with both ends in easy reach, and never jammed.
+The generated tasks came out about as hard as the hand-written ones. The generator also made its own choices along the way: it colour-coded the circles in balance_sort where I used left-to-right order, and it added a height check to max_overhang that I hadn't thought of.
 
-No check caught this, and the reason is worth knowing. The scripted solution for the balance tasks already knows the weights, so it never touches the balance. A check built on that solution cannot notice that the balance is hard to reach. The fix is a scripted solution that has to use the balance, which I wrote for balance_sort by hand and the generator does not yet produce.
+The two balance rows count two attempts each because the other three were lost to the wrist jam described in doc 3. The generator laid the plank lengthways where I had laid it crossways. That is a reasonable layout, but it makes Astra turn its wrist a quarter turn about three times per attempt, against about once in three attempts on my layout, and a quarter turn is what sets off the jam. So this is the arm's weak spot showing up under a new layout. I have added a line to the generator's instructions to lay long objects crossways.
+
+The one task the generator could not produce was weighted_overhang. Its scripted solution has to stack four off-centre blocks so that the tower still stands when every placement is 5 mm off. The generator found stacks that stand, but none that survived that test in the rounds I gave it. Writing scripted solutions for physically delicate tasks is the generator's weak point, and doc 3 comes back to it.
 
 To run one: `TASK=max_overhang HUD_LLM_MODEL=gpt-6-astra STEPS=60 EPISODES=5 python rua/run.py`
 

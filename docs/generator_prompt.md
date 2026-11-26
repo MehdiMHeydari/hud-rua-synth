@@ -26,6 +26,8 @@ rua/spec.py (it can miss objects or mislabel them), drop "no match" objects, the
   at_goal (each centre within `radius` of its goal pose, resting; the agent sees the goals only as a goal image).
   overhang (a box's farthest corner >= `beyond` m past a platform's +x face, released, above its top).
 - `z` on an object: height of the surface it starts on (e.g. on a platform); offsets are from its centre.
+- Lay long objects the agent must work along (a seesaw plank, a rail) crossways (`yaw: [90, 90]`), so the gripper works at yaw 0.
+  A lengthways plank made Astra turn the wrist a quarter turn ~3 times per episode and jam the arm in 6 of 10 episodes.
 - Placement: `x`, `y`, `yaw` ranges, sampled per seed. Keep everything reachable (x 0.3-0.8 at table height)
   and >= 5 cm inside the top camera's view (roughly x 0.0-1.0, y +-0.6; the `visible` gate checks).
   `layout_yaw: [lo, hi]` rotates the whole layout per seed so relations aren't always on the same side.
