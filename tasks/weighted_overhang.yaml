@@ -1,0 +1,59 @@
+name: weighted_overhang
+prompt: >-
+  Four identical blocks (14 x 4 x 3 cm; three blue, one red) lie flat on the table next to a
+  white ledge 8 cm high. Build a structure on the ledge so that the red block's far end sticks out at
+  least 15 cm past the ledge's near edge (the edge facing the robot), measured toward the robot. The red
+  block must rest on the structure, not on the table, and every block must be released and at rest. No
+  block's weight is evenly spread along its length.
+objects:
+  # Edge faces the robot (yaw 180: the ledge's +x face is world -x), so the overhang hangs into open,
+  # reachable space. Blocks start beside it at y +-0.24 so the hand (20 cm across) clears the ledge.
+  - {name: ledge, shape: platform, size: [0.20, 0.20, 0.08], color: white, x: [0.66, 0.67], y: [-0.01, 0.01], yaw: [180, 180]}
+  - {name: b1, shape: box, size: [0.14, 0.04, 0.03], color: blue, mass: 0.05, weight: 0.10,
+     x: [0.40, 0.42], y: [0.23, 0.25], yaw: [-150, 150]}
+  - {name: b2, shape: box, size: [0.14, 0.04, 0.03], color: blue, mass: 0.05, weight: 0.10,
+     x: [0.40, 0.42], y: [-0.25, -0.23], yaw: [-150, 150]}
+  - {name: b3, shape: box, size: [0.14, 0.04, 0.03], color: blue, mass: 0.05, weight: 0.10,
+     x: [0.60, 0.62], y: [-0.27, -0.25], yaw: [-150, 150]}
+  - {name: red, shape: box, size: [0.14, 0.04, 0.03], color: red, mass: 0.05, weight: 0.10,
+     x: [0.60, 0.62], y: [0.25, 0.27], yaw: [-150, 150]}
+success:
+  overhang: {object: red, platform: ledge, beyond: 0.15}
+# max_overhang with hidden lead (as hidden_weight): each block's centre of mass is 4 cm toward
+# its lead end. Same centre-of-mass layout as max_overhang (1 cm margins), lead ends back: the red
+# light end reaches 15.5 cm (layout 1 cm back: 5 mm toward the robot toppled it). 15 cm beats the uniform-block maximum (14.6 cm), so it needs every
+# block found and turned light end out. Grasps are over each block's centre of mass.
+oracle:
+  - {at: b1, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: b1, offset: [0.04, 0, 0], gripper: open}
+  - {at: b1, offset: [0.04, 0, 0], gripper: closed}
+  - {at: b1, offset: [0.04, 0, 0.12], gripper: closed}
+  - {at: ledge, offset: [0.035, 0, 0.195], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.035, 0, 0.100], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.035, 0, 0.100], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.035, 0, 0.195], yaw: 180, gripper: open}
+  - {at: b2, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: b2, offset: [0.04, 0, 0], gripper: open}
+  - {at: b2, offset: [0.04, 0, 0], gripper: closed}
+  - {at: b2, offset: [0.04, 0, 0.12], gripper: closed}
+  - {at: ledge, offset: [0.055, 0, 0.225], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.055, 0, 0.130], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.055, 0, 0.130], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.055, 0, 0.225], yaw: 180, gripper: open}
+  - {at: b3, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: b3, offset: [0.04, 0, 0], gripper: open}
+  - {at: b3, offset: [0.04, 0, 0], gripper: closed}
+  - {at: b3, offset: [0.04, 0, 0.12], gripper: closed}
+  - {at: ledge, offset: [0.085, 0, 0.255], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.085, 0, 0.160], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.085, 0, 0.160], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.085, 0, 0.255], yaw: 180, gripper: open}
+  - {at: red, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: red, offset: [0.04, 0, 0], gripper: open}
+  - {at: red, offset: [0.04, 0, 0], gripper: closed}
+  - {at: red, offset: [0.04, 0, 0.12], gripper: closed}
+  - {at: ledge, offset: [0.145, 0, 0.285], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.145, 0, 0.190], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.145, 0, 0.190], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.145, 0, 0.285], yaw: 180, gripper: open}
+knobs: {blocks: 4, overhang_cm: 15, lead_kg: 0.10, margin_mm: 10}

@@ -48,7 +48,7 @@ def part_offset(shape: str, size: list[float], part: str | None) -> np.ndarray:
 
 def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mass: float,
         travel: float = 0.2, damping: float = 2.0, hole: float = 0.04, asset: str | None = None,
-        friction: float = 1.0, pivot: float = 0.05, weight: float = 0.0) -> None:
+        friction: float = 1.0, pivot: float = 0.05, weight: float = 0.0, loose: bool = False) -> None:
     """Add one object to the scene. Primitives and compounds are free bodies; templates are fixed to the table."""
     if shape in PRIMITIVES:
         body = spec.worldbody.add_body(name=name)
@@ -63,7 +63,7 @@ def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mas
     elif shape == "hook":
         _add_hook(spec, name, size, rgba, mass)
     elif shape == "drawer":
-        _add_drawer(spec, name, size, rgba, mass, travel, damping)
+        _add_drawer(spec, name, size, rgba, mass, travel, damping, loose)
     elif shape == "hole_block":
         _add_hole_block(spec, name, size, rgba, hole)
     elif shape == "asset":
@@ -102,18 +102,24 @@ def _add_hook(spec, name, size, rgba, mass) -> None:
 DRAWER_FRICTION = 0.5
 
 
-def _add_drawer(spec, name, size, rgba, mass, travel, damping) -> None:
+def _add_drawer(spec, name, size, rgba, mass, travel, damping, loose=False) -> None:
     """Open-front cabinet (front faces -x, toward the robot) with a drawer on a slide joint."""
     d, w, h = size
     box = mujoco.mjtGeom.mjGEOM_BOX
     grey = [0.75, 0.75, 0.75, 1]
     cab = spec.worldbody.add_body(name=name)  # fixed: no joint
+    # Loose: a free 0.15 kg cabinet on low-friction walls, so the slide's resistance exceeds its grip
+    # on the table and pulling the handle drags the whole cabinet (Robocurve SET, Nov 2026: agents
+    # never brace the object they act on; the backpack slid instead of unzipping).
+    extra = {"mass": 0.15 / 5, "friction": [0.25, 0.005, 0.0001], "priority": 1} if loose else {}  # priority: its friction wins over the table's
+    if loose:
+        cab.add_freejoint()
     for pos, half in (([0, 0, WALL / 2], [d / 2, w / 2, WALL / 2]),  # bottom
                       ([0, 0, h - WALL / 2], [d / 2, w / 2, WALL / 2]),  # top
                       ([0, w / 2 - WALL / 2, h / 2], [d / 2, WALL / 2, h / 2]),  # sides
                       ([0, -w / 2 + WALL / 2, h / 2], [d / 2, WALL / 2, h / 2]),
                       ([d / 2 - WALL / 2, 0, h / 2], [WALL / 2, w / 2, h / 2])):  # back
-        cab.add_geom(type=box, pos=pos, size=half, rgba=grey)
+        cab.add_geom(type=box, pos=pos, size=half, rgba=grey, **extra)
     drawer = cab.add_body(name=f"{name}_drawer")
     # The drawer rides on its joint like on rails: no rubbing against its own cabinet (a fixed
     # cabinet counts as world, so MuJoCo's parent-child exclusion doesn't apply and it jams).

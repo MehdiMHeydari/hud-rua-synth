@@ -39,6 +39,7 @@ class Obj(BaseModel):
     pivot: float = 0.05  # seesaw only: hinge height above the table (m); size is the plank [length, width, thickness]
     travel: float = 0.2  # drawer only: how far it slides out (m)
     damping: float = 2.0  # drawer: resistance to sliding (N*s/m), a difficulty knob; seesaw: to swinging (N*m*s/rad)
+    loose: bool = False  # drawer only: cabinet not fixed but a light free body on slippery feet (pulling drags it)
     start: float = 0.0  # drawer only: how far open at reset, as a fraction of travel
     hole: float = 0.04  # hole_block only: side of the square hole (m); minus the peg width = clearance
     only: list[str] | None = None  # exists only in these variants (see TaskSpec.variants); parked out of sight otherwise

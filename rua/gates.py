@@ -48,8 +48,11 @@ def gate_joints(sim: Sim, seed: int) -> str | None:
         yaw = sim.task.sample(seed)[o.name][1]
         body = sim.model.body(f"{o.name}_drawer").id
         sim.data.xfrc_applied[body, :3] = [-10 * np.cos(yaw), -10 * np.sin(yaw), 0]
+        cab = sim.model.body(o.name).id
+        if o.loose:  # a free cabinet would just slide along: hold it with the opposite force, test the slide only
+            sim.data.xfrc_applied[cab, :3] = -sim.data.xfrc_applied[body, :3]
         sim._run(1.0)
-        sim.data.xfrc_applied[body] = 0
+        sim.data.xfrc_applied[body] = sim.data.xfrc_applied[cab] = 0
         if (frac := objects.joint_fraction(sim.model, sim.data, o.name)[0]) < 0.5:
             return f"{o.name} opened only {frac:.0%} under a 10 N pull (jammed or too stiff)"
     return None
