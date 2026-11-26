@@ -1,4 +1,4 @@
-# 2. Pipeline design
+# Pipeline design
 
 The pipeline turns a one-line intent into a checked MuJoCo task. An LLM writes the task. Code decides whether it is any good.
 

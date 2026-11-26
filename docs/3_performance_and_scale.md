@@ -1,4 +1,4 @@
-# 3. Performance, bottlenecks, and what scale needs
+# Performance and bottlenecks
 
 ## Cost per rollout
 

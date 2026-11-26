@@ -10,9 +10,9 @@ I used it to find out where GPT-6 Astra fails, and ended up with five tasks it f
 
 There are three short docs. They are the deliverables.
 
-1. [What robot-use agents can and can't do](docs/1_capability_profile.md)
-2. [How the pipeline works](docs/2_pipeline.md). The five tasks and their rollouts are linked from here.
-3. [Cost, what went wrong, and what it would take to scale](docs/3_performance_and_scale.md)
+1. [Capability profile](docs/1_capability_profile.md)
+2. [Pipeline design](docs/2_pipeline.md), with the five tasks and their rollouts
+3. [Performance and bottlenecks](docs/3_performance_and_scale.md)
 
 ## Running it
 
