@@ -75,14 +75,17 @@ def gate_robust(sim: Sim, seed: int, error: float = 0.005) -> str | None:
     """The oracle still succeeds with its placements 5 mm off (the tool only stops within ~1 cm, and
     agents localise worse). Caught peg_in_hole at 7 mm clearance: 8/16 at 5 mm off, so sol's 0/10
     measured the harness, not the model. Shifts the second half of the plan in 4 directions; 3/4 must pass."""
-    plan, passed = sim.task.plan(seed), 0
+    plan, passed, first = sim.task.plan(seed), 0, ""
     for k in range(4):
         sim.reset(seed)
         shift = error * np.array([np.cos(k * np.pi / 2 + 0.4), np.sin(k * np.pi / 2 + 0.4), 0])
         for i, (pos, yaw, gripper) in enumerate(plan):
             sim.move_to(pos + (shift if i >= len(plan) // 2 else 0), yaw=yaw, gripper=gripper)
-        passed += sim.success(sim.task.oracle_answer(seed))
-    return None if passed >= 3 else f"oracle fails with 5 mm placement error ({passed}/4): precision tighter than the tool allows"
+        ok = sim.success(sim.task.oracle_answer(seed))
+        passed += ok
+        if not ok and not first:  # where things ended up, so the generator can see what fell and by how much
+            first = f"; with the second half shifted {np.round(shift[:2] * 1000, 1).tolist()} mm the final state was {sim.task.final_state(sim)}"
+    return None if passed >= 3 else f"oracle fails with 5 mm placement error ({passed}/4): precision tighter than the tool allows{first}"
 
 
 def gate_visible(sim: Sim, seed: int, margin: float = 0.05) -> str | None:

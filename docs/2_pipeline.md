@@ -67,12 +67,12 @@ What the agent sees and does matters as much as the model. JustRUA raised one be
 
 | Choice | Why |
 |---|---|
-| `move_to` with absolute end-effector poses | Relative moves cost 14 points on precision tasks in JustRUA. `move_joints` would make the model do the arm's geometry in its head, with no evidence that LLMs can. The SDK serves one motion tool per environment, so it would be a launch setting. I scoped it and did not build it |
+| `move_to` with absolute end-effector poses | JustRUA found relative targets do not beat absolute ones (33.9 against 38.0 overall). `move_joints` would make the model do the arm's geometry in its head, with no evidence that LLMs can. The SDK serves one motion tool per environment, so it would be a launch setting. I scoped it and did not build it |
 | Images after every move | Showing images only on request dropped success from 83% to 68.5% (PyRUA-Lean) |
 | Two cameras, top and wrist | More cameras are not reliably better: a third view changed scores by -3.6, +5.8 and +10.7 across three models (Anthropic). In our runs one angled camera left luna unable to judge depth, and the wrist view fixed it |
-| A plain-words grasp line ("fingers met; nothing between them") | On real arms 32-64% of grasps close on nothing (Bitter Lesson), and compact readings beat verbose JSON (JustRUA) |
+| A plain-words grasp line ("fingers met; nothing between them") | On real arms 32-64% of grasps close on nothing, depending on the model (Bitter Lesson) |
 | A line saying when a move stopped short | In the LIBERO-10 study arms reached only 64-72% of the commanded distance, and models could not work out why |
-| Full history, medium effort | Keeping every image beat keeping the last two (JustRUA). Astra peaked at medium effort there, and high effort changed nothing in our one test |
+| Full history, medium effort | Keeping the full episode history lifted JustRUA's score from 29.7 to 34.7, and it ran at medium effort. High effort changed nothing in our one test |
 | Grading on the final state, hidden from the agent | Models claim success on 24-39% of unfinished subtasks (RoboARCade), so the agent's word cannot be the grade |
 | MuJoCo with the Menagerie Panda and mink IK, moves interpolated | A local benchmark showed that commanding a pose as one jump dropped a held cube, and interpolating kept it |
 
