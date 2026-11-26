@@ -334,6 +334,11 @@ simulation only runs while the arm is moving, so nothing fast or
 reactive can be tested, like catching a rolling ball. This is the
 biggest gap. My lab teammate named fast, reactive manipulation as where
 these agents are weakest.</li>
+<li><strong>Delicate scripted solutions.</strong> The generator writes
+good tasks but struggles to write a solution that needs precise physical
+tuning. weighted_overhang failed 13 times from a blank page and passed
+first time once it could start from a similar task that already
+worked.</li>
 <li><strong>The scripted solutions know too much.</strong> They know the
 hidden weights. That proves the physics works, not that the task can be
 solved from what the agent can see. I wrote one solution that has to

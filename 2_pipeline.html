@@ -440,7 +440,7 @@ href="https://www.hud.ai/jobs/7aea5806aff543a585425c93a918b480">3</a></td>
 <td>weighted_overhang</td>
 <td><a
 href="https://github.com/MehdiMHeydari/hud-rua-synth/blob/main/tasks/weighted_overhang.yaml"><code>tasks/weighted_overhang.yaml</code></a></td>
-<td>No</td>
+<td>Yes, starting from max_overhang</td>
 <td>0 of 12</td>
 <td><a
 href="https://www.hud.ai/jobs/3a19fb37768e49afb70514660a3acb7f">1</a>,
@@ -518,11 +518,11 @@ href="https://www.hud.ai/jobs/96f6599ff40b4ce398c4982e7e2e3f99">job</a></td>
 href="https://www.hud.ai/jobs/394a6c07ec5b4cb58509f3ba4d0c7d13">job</a></td>
 </tr>
 <tr>
-<td>hidden_weight</td>
-<td>not one of my five</td>
-<td>2 of 5, and 3 more lost to arm jams</td>
+<td>weighted_overhang</td>
+<td>0 of 12</td>
+<td>0 of 4, and 1 more lost to an arm jam</td>
 <td><a
-href="https://www.hud.ai/jobs/1b5de27bef1b458cbf247661b350de81">job</a></td>
+href="https://www.hud.ai/jobs/b2296a54129e44478e4615962696b0ec">job</a></td>
 </tr>
 </tbody>
 </table>
@@ -544,18 +544,15 @@ turn its wrist a quarter turn about three times per attempt, which set
 off the arm jam described in doc 3 in 6 of 10 attempts. I added one line
 to the generator's instructions, to lay long objects across the table.
 Its next versions did, and the arm didn't jam once in 10 attempts.</p>
-<p>That gives five tasks the generator made on its own, each with Astra
-rollouts: max_overhang, overhang_or_impossible, balance_sort,
-balance_pick and hidden_weight. hidden_weight is the weakest. Two blocks
-each hide a weight at one end and have to stick out past a ledge. The
-two attempts the arm jam didn't spoil were both successes, so it is
-probably not hard for Astra. I kept weighted_overhang as a sixth task
-because it is my hardest result, 0 of 12.</p>
-<p>weighted_overhang is the one task the generator couldn't produce. Its
-scripted solution has to stack four off-centre blocks so the tower still
-stands with every placement 5 mm off, and the generator didn't find one
-in the tries I gave it. Writing scripted solutions for delicate physical
-tasks is the generator's weak point. Doc 3 comes back to it.</p>
+<p>So the generator rebuilt all five tasks, and four of the five came
+out as hard as my versions.</p>
+<p>weighted_overhang took one more idea. Written from a blank page, the
+generator failed 13 times in a row: it could not find a stack of four
+off-centre blocks that still stands with every placement 5 mm off. So I
+gave it a new option, to start from a task that already passes every
+check and change only what the new task needs, the way GenSim2 builds
+new tasks out of accepted ones. Starting from max_overhang, it passed,
+and Astra scored 0 on it, the same as on mine.</p>
 <p>To run one yourself:
 <code>TASK=max_overhang HUD_LLM_MODEL=gpt-6-astra STEPS=60 EPISODES=5 python rua/run.py</code></p>
 <h2 id="what-i-turned-down">What I turned down</h2>
