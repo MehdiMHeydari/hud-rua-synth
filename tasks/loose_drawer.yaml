@@ -2,7 +2,8 @@ name: loose_drawer
 prompt: >-
   The drawer of the small cabinet starts closed. Open it by pulling its handle until the drawer is at least 90% of the
   way out. The cabinet is not fixed to the table. When you finish, the cabinet must be no more than
-  5 cm from where it started. Leave everything released and at rest.
+  5 cm from where it started. A heavy black block (1 kg) is on the table; you may use it. Leave
+  everything released and at rest.
 objects:
   - {name: cabinet, shape: drawer, size: [0.25, 0.30, 0.14], color: wood, mass: 0.2, loose: true,
      x: [0.62, 0.68], y: [-0.1, 0.1], yaw: [-15, 15], travel: 0.18, damping: 3.0}

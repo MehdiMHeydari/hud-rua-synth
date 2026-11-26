@@ -32,6 +32,14 @@ Non-obvious lesson: most early "failures" were the harness, not the model.
 - Physics confounds found by gates before any model run: weak Menagerie grip (~2.5 N), objects pivoting/sliding in the grip, IK posture swinging the wrist mid-lift, drawer jamming on its own cabinet.
 - Precision cliffs: peg at 7 mm clearance and push at 1 cm were unsolvable at the tool's accuracy; sol's 0-1/10 measured the harness.
 
+GPT-6 Astra (Nov 25, 60 steps; supersedes the sol profile above for targeting):
+- Solves the sol set: precision, tool use, drawers (after the slide-friction fix), frames, decoys, goal images. Self-verification is NOT its weak spot; failures are reported honestly.
+- Fails at statics / centre of mass: max_overhang 4/15, weighted_overhang 0/3.
+- Fails at finding hidden properties by interaction and then handling them: hidden_weight 1/10 (hint: 2/10, so execution not strategy), balance_sort 1/10.
+- Fails to brace a loose object before acting on it (Robocurve SET, real robots, 0/72): loose_drawer 0/3 (confounded, see findings), loose_lid, loose_tray.
+- Thin objects that need the environment to pick up: flat_card 1/3.
+- Aim new tasks at: statics, hidden mass/friction, bracing, thin/small objects. Not at: selection, frames, plain pick-and-place.
+
 Suggested task groups (each has a smooth knob): multi-step chains (steps), articulated objects (damping, handle size), stacking (block count), reference frames (frame type, distractors), tool use (distance, tool shape), self-verification (success not visible from top camera).
 
 ## 2. Pipeline design

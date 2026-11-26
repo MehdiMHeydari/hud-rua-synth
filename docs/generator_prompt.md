@@ -12,6 +12,11 @@ rua/spec.py (it can miss objects or mislabel them), drop "no match" objects, the
   part `handle`, fields `travel`, `damping`, `start`); hole_block (fixed, field `hole`); platform (fixed solid box, e.g. a ledge); seesaw (fixed fulcrum, plank `size` [length, width, thickness] on a
   hinge `pivot` m up, `damping`; starts level, the table stops its ends); zone (fixed, visual only; size `[d]` circle or `[x, y]` rectangle).
   Primitives take `friction` (default 1; it also sets grip, MuJoCo uses the larger of the two).
+  Hidden-property fields (for tasks where the agent must find something out by interacting): box `weight`
+  (kg of invisible lead at its +x end; a random `yaw` hides which end), primitive `priority: 1` (its `friction`
+  wins over the table's, so < 1 makes it slippery), drawer `loose: true` (light free cabinet that slides when
+  the handle is pulled unless braced or weighted down), platform `friction`. lidbox (free, light box with a
+  sliding lid, part `handle`, field `stiction`; graded with `opened`).
 - Scanned assets: `{shape: asset, asset: <id>}` with an `admitted: true` id from `assets/catalog.yaml`; size and
   mass come from the card (never set `size`; no `color`, they are textured). Body origin = bbox centre, so
   predicates treat it like a box of the card size. Use `graspable`/`hollow` from the card: only graspable
