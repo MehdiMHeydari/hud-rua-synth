@@ -1,6 +1,7 @@
 """One-command task generator: intent (or photo) -> spec -> checks -> feedback -> human review.
 
     python rua/generate.py "test whether the agent can ..." [--image photo.jpg] [--model M] [--rounds 4] [--name NAME]
+    python rua/generate.py "..." --base max_overhang  # start from an accepted task
     python rua/generate.py --approve NAME          # tasks/generated/NAME.yaml -> tasks/NAME.yaml
     python rua/generate.py --reject NAME --reason "..."
     python rua/generate.py --stats
@@ -207,6 +208,7 @@ if __name__ == "__main__":
     ap.add_argument("--model", default="claude-opus-5-5")  # strongest coding model on the gateway
     ap.add_argument("--rounds", type=int, default=4)
     ap.add_argument("--name")
+    ap.add_argument("--base", help="an accepted task to start from (bottom-up composition, as in GenSim2)")
     ap.add_argument("--approve")
     ap.add_argument("--reject")
     ap.add_argument("--reason")
@@ -224,4 +226,8 @@ if __name__ == "__main__":
             text = (text or draft["tasks"][0]["intent"]) + f"\nScene from a photo (draft mapping, re-check it): {draft.get('objects')}"
         if not text:
             ap.error("give an intent or --image")
+        if a.base:  # start from a spec that already passes every gate; the model edits it instead of starting blank
+            text += (f"\nStart from this accepted task, which passes every gate, and change only what the intent needs. "
+                     f"Keep its working parts (layout, grasp heights, oracle structure) unless they conflict:\n"
+                     f"```yaml\n{(spec.TASKS_DIR / f'{a.base}.yaml').read_text()}```")
         generate(text, a.model, a.rounds, a.name)
