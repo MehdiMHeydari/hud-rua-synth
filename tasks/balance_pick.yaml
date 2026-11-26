@@ -1,0 +1,31 @@
+name: balance_pick
+prompt: >-
+  The three red cubes (5 cm) look identical but have different weights. Put the heaviest one in the
+  green circle: its centre within 4 cm of the circle's centre. The other two must not end up with
+  their centres inside the circle. A balance stands at the far side of the table: a plank on a
+  central pivot that starts level and tips toward the heavier side when cubes rest on both ends.
+  Leave every cube released and at rest.
+# balance_sort with a third of the work: two weighings and one placement (~30 calls), so a failure
+# here is not the step budget. Luck floor 1 in 3. If Astra is high here, balance_sort's ~8% is
+# horizon; if low, using the balance is the gap.
+objects:
+  - {name: light, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 0.10, x: [0.47, 0.50], y: [0.13, 0.16]}
+  - {name: medium, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 0.15, x: [0.47, 0.50], y: [-0.015, 0.015]}
+  - {name: heavy, shape: box, size: [0.05, 0.05, 0.05], color: red, mass: 0.22, x: [0.47, 0.50], y: [-0.16, -0.13]}
+  - {name: balance, shape: seesaw, size: [0.40, 0.07, 0.02], pivot: 0.08, damping: 0.05, mass: 0.3, color: wood,
+     x: [0.68, 0.70], y: [-0.01, 0.01], yaw: [90, 90]}
+  - {name: goal, shape: zone, size: [0.13], color: green, x: [0.32, 0.33], y: [-0.005, 0.005]}
+shuffle: [[light, medium, heavy]]
+success:
+  in_zone: {object: heavy, zone: goal, radius: 0.04}
+  clear: {zone: goal, objects: [light, medium]}
+oracle:
+  - {at: heavy, offset: [0, 0, 0.15], gripper: open}
+  - {at: heavy, gripper: open}
+  - {at: heavy, gripper: closed}
+  - {at: heavy, offset: [0, 0, 0.15], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.17], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.03], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.03], gripper: open}
+  - {at: goal, offset: [0, 0, 0.17], gripper: open}
+knobs: {cubes: 3, mass_ratio: 1.5}

@@ -78,3 +78,16 @@ Bullets only. Each: what, evidence (trace/job), why we think it happens.
   | hidden_weight (control) | 6/10 | - | pre-fix 1/10 was the wrist jam |
   No episode on the fixed harness has 2+ consecutive 10 cm stalls (before: up to 10 in a row), and no failure hit the step cap. All failures except one loose_drawer are reported honestly.
 - **Open items, stated plainly:** n=5 per task on the final harness; plate_to_edge's drop is not explained; weighted_overhang and loose_drawer were hand-written (the generator regenerated max_overhang, balance_sort, plate_to_edge, hidden_weight only); balance_sort is partly budget-bound; spend is at the $100 approved.
+- **CORRECTION 5: my wrist fix was itself a harness bug; reverted.** The IK retry (solve again from home when a solve ends off target) fired during ordinary tilted grasps and jumped the arm's posture. Proof by replay: 3 of 5 recorded plate_to_edge successes fail when the same tool calls are replayed with the retry, and succeed again on the original IK. Two narrower versions (position error > 3 cm; plus wrist joint at its stop) either still changed outcomes or no longer recovered to park. Decision: original IK restored (what the gates, oracles and most data were validated on); the yaw limit stays as one line in the tool notes; the jam is a known limit, flagged per run. The "FINAL NUMBERS, fixed harness" table above is void.
+- **Method that came out of it (all free):** replays of recorded tool calls are exactly deterministic (0 differing result lines on the harness an episode ran on), so (a) any harness change can be regression-tested against recorded successes before spending on a model, (b) every episode can be classified: old-harness episodes by "2+ moves in a row ending 10+ cm short" (jam), retry-harness episodes by whether the retry ever fired (0 = identical to the original IK). run.py now prints `jammed` and `near budget` counts with every result.
+- **Numbers with contaminated episodes removed (Astra, 60 steps):**
+  | task | clean | excluded | reading |
+  |---|---|---|---|
+  | max_overhang | 5/18 = 28% | 2 of 20 | solid; the retry never fired in any of its episodes |
+  | balance_sort | 1/12 = 8% | 3 of 15 | holds; failures still bunch near the step budget |
+  | weighted_overhang | 0/7 | 6 of 13 | holds at small n |
+  | loose_drawer (fair prompt) | 5/7 | 3 of 10 | too easy once the prompt names the block |
+  | plate_to_edge | 7/10 | 10 of 20 | too easy; most failures were jams or the retry |
+  | hidden_weight | 5/8 | 12 of 20 | too easy |
+  The last three are biased upward (the excluded episodes were mostly failures); their true rates need a rerun on the restored harness. Hard-and-honest set today: max_overhang, balance_sort, weighted_overhang.
+- **Two more candidates built, gates pass, not yet run on a model:** balance_pick (balance_sort scene, only the heaviest cube into a circle: ~30 calls, luck floor 1/3; separates "can't use the balance" from "runs out of steps") and overhang_or_impossible (max_overhang where half the seeds have two blocks, whose bound is 10.5 cm < 11.5 asked, so the answer is IMPOSSIBLE; tests computing the bound and failed-vs-impossible both ways).

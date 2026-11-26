@@ -16,6 +16,7 @@ import asyncio
 import json
 import math
 import os
+import re
 import time
 from collections import Counter
 from pathlib import Path
@@ -44,6 +45,18 @@ SYSTEM_PROMPT = (
 )
 
 
+def _jammed(run) -> bool:
+    row = worst = 0
+    for s in run.trace.steps:
+        if s.source != "tool":
+            continue
+        text = " ".join(getattr(b, "text", "") or "" for b in (getattr(getattr(s, "result", None), "content", None) or []))
+        m = re.search(r"stopped ([\d.]+) cm short", text)
+        row = row + 1 if m and float(m.group(1)) >= 10 else 0
+        worst = max(worst, row)
+    return worst >= 2
+
+
 async def main() -> None:
     tasks = [Task(env="tabletop", id="episode", args={"task": TASK, "seed": SEED0 + i}) for i in range(EPISODES)]
     if MODEL == "oracle":  # scripted solver: checks the harness, no LLM cost
@@ -67,13 +80,19 @@ async def main() -> None:
     peak = max((max((getattr(s.usage, "prompt_tokens", 0) or 0 for s in r.trace.steps if s.source == "agent"), default=0)
                 for r in job.runs), default=0)
     ends = dict(Counter(r.trace.stop_reason or "error" for r in job.runs if (r.reward or 0) < 1))
+    # Harness flags, so a low score is not read as capability before these are zero:
+    # jammed = failures with 2+ moves in a row ending 10+ cm short (the arm stuck at a joint limit, e.g. a
+    # wrist turn through yaw -2.0: 10 of 17 hidden_weight failures); near_budget = failures that stopped in
+    # the last 10% of the step budget (the model knows its budget and quits before the cap).
+    jammed = sum(_jammed(r) for r in job.runs if (r.reward or 0) < 1)
+    near = sum(sum(s.source == "tool" for s in r.trace.steps) >= 0.9 * STEPS for r in job.runs if (r.reward or 0) < 1)
     lo, hi = wilson(k, n)
     verdict = "too easy" if lo > 0.30 else "too hard" if hi < 0.05 else "in band" if 0.05 <= k / n <= 0.30 else "unclear"
     if errors:
         verdict = f"INVALID: {errors}/{n} rollouts errored (harness/spec bug, not model failures)"
     cost = n * COST_PER_EPISODE.get(MODEL, 0.0)
     print(f"{TASK}: {k}/{n} = {k / n:.0%} (90% CI {lo:.0%}-{hi:.0%}) -> {verdict}; "
-          f"{capped} failures hit the {STEPS}-step cap; failures ended by {ends}; peak context {peak} tokens; "
+          f"{capped} failures hit the {STEPS}-step cap, {jammed} jammed, {near} near budget; failures ended by {ends}; peak context {peak} tokens; "
           f"est cost ${cost:.2f}")
     save_traces(job)
     log = Path(__file__).parents[1] / "runs" / "log.jsonl"
@@ -81,7 +100,7 @@ async def main() -> None:
     with log.open("a") as f:
         f.write(json.dumps({"time": time.strftime("%Y-%m-%d %H:%M"), "task": TASK, "model": MODEL, "steps": STEPS,
                             "effort": EFFORT, "cameras": os.environ.get("CAMERAS", "top,wrist"), "seed0": SEED0,
-                            "image": IMAGE, "peak_tokens": peak, "fail_ends": ends, "k": k, "n": n, "errors": errors, "capped": capped, "job": job.id, "est_cost": round(cost, 3)}) + "\n")
+                            "image": IMAGE, "peak_tokens": peak, "fail_ends": ends, "k": k, "n": n, "errors": errors, "capped": capped, "jammed": jammed, "near_budget": near, "job": job.id, "est_cost": round(cost, 3)}) + "\n")
 
 
 def save_traces(job) -> None:
