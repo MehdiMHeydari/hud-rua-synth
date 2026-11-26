@@ -10,7 +10,7 @@ flowchart LR
     F -->|passes| H[Human approves]
     H --> P{Run the target model}
     P -->|too easy or too hard| G
-    P -->|in band| T{Read the traces<br/>and replay them}
+    P -->|hard enough| T{Read the traces<br/>and replay them}
     T -->|the model failed| L[(Task library)]
     T -->|our harness failed| K[Fix it,<br/>add a free check]
     K --> F
@@ -49,7 +49,7 @@ Cheapest checks run first. Anything that fails goes back with its reason.
 | Robust | The solution still works with every placement 5 mm off | Our tool only stops within about 1 cm. A peg task at 7 mm clearance passed the oracle, and sol's 0/10 on it measured our tool, not sol |
 | Truth test (15 checks) | Whether everything we tell the agent is true | All eight of luna's first failures were things we had told it wrong |
 | Asset admission | A scanned object that can't be gripped, won't release, or doesn't rest flat | Same idea as the truth test, for objects |
-| Model run | Whether the task lands in the band | Only a model can measure difficulty |
+| Model run | How hard the task is for the target model | Only a model can measure difficulty |
 | Trace review and replay | Whether a failure is the model's or ours | See doc 3. Half our hard results failed this |
 
 Two choices inside that table:
@@ -59,7 +59,7 @@ Two choices inside that table:
 
 Each model run also reports three counts: failures that hit the step cap, failures where the arm jammed, and failures that stopped just short of the step budget. A low score is not read as "hard" until the first two are zero and the third has been read.
 
-**On the 5-30% band.** I kept the band from the brief. The papers I found on difficulty filtering argue for about 50%, because a pass/fail signal carries the most information there (Online Difficulty Filtering, DAPO). I could not find a source for 5-30% and have listed it as an open question in doc 3. For sample size, simple binomial arithmetic says 10 episodes cannot tell 5% from 30%, so the sol calibrations used 20 or more.
+**On the target difficulty.** The brief asks for tasks an agent passes 5-30% of the time. I checked with Lukass: the band is measured on Astra, the exact range matters less than the reason behind a failure, and for this project lower is better. So a task at 0% stays in the set if the traces show an honest failure, and I spent the effort on proving the failures are real. For sample size, simple binomial arithmetic says 10 episodes cannot tell 5% from 30%, so the sol calibrations used 20 or more.
 
 ## Harness
 
@@ -110,7 +110,6 @@ The full log of decisions is in `docs/decisions.md`.
 - RoboGen, [arXiv 2311.01455](https://arxiv.org/html/2311.01455v3). AnyTask, [arXiv 2512.17853](https://arxiv.org/html/2512.17853v2)
 - RoboTwin 2.0, [arXiv 2506.18088](https://arxiv.org/html/2506.18088v2)
 - Agentic Benchmark Checklist, [arXiv 2507.02825](https://arxiv.org/html/2507.02825v5). OpenAI on [SWE-bench Verified](https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/)
-- Online Difficulty Filtering, [arXiv 2504.03380](https://arxiv.org/html/2504.03380v2). DAPO, [arXiv 2503.14476](https://arxiv.org/pdf/2503.14476v2)
 - ManiSkill2, [arXiv 2302.04659](https://arxiv.org/pdf/2302.04659)
 - JustRUA, [arXiv 2611.16009](https://arxiv.org/abs/2611.16009). PyRUA-Lean, [arXiv 2610.01939](https://arxiv.org/pdf/2610.01939)
 - Anthropic, [Claude plays robotics](https://www.anthropic.com/research/claude-plays-robotics)

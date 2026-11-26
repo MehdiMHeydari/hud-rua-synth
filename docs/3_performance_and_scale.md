@@ -24,7 +24,7 @@ How the cost stayed down:
 
 What a bigger budget would buy:
 
-- **More episodes.** Five episodes cannot tell 10% from 40%. Placing a task in a band takes 20 to 30, roughly $15 to $20 per task on Astra.
+- **More episodes.** Five episodes cannot tell 10% from 40%. Pinning down a success rate takes 20 to 30, roughly $15 to $20 per task on Astra.
 - **More steps.** The balance tasks end at calls 43 to 57 of 60. A longer budget would show how much of that failure is running out of room.
 - **A side camera.** Astra misjudged an overhang by 5 mm from the top view, and height is hard to read from above. I did not test a third camera.
 - **Larger images and higher effort.** I tried both on one task (480 px, high effort) and saw no clear change, 6/8 against 9/15. I would not spend here first.
@@ -74,16 +74,9 @@ What also helped: a second model read the traces with no context and found the w
 5. A second embodiment, with every check rerun per robot.
 6. Milestone grading, and an LLM judge for trace review with human spot checks.
 
-## Open questions
-
-- **Why a 5-30% band?** The papers I found on difficulty filtering argue for about 50%, where a pass/fail result carries the most signal (Online Difficulty Filtering, DAPO, No Regrets). A task at 5% carries about a fifth of the signal of one at 50%. HUD's own guide says a task is "often" hard at 50% or less. I kept the brief's band and would like to understand the reason for it.
-- **Which model defines the band?** I tuned for sol first, then had to start over for Astra.
-
 ## Sources
 
 - JustRUA, [arXiv 2611.16009](https://arxiv.org/abs/2611.16009)
 - OpenAI on [SWE-bench Verified](https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/)
-- Online Difficulty Filtering, [arXiv 2504.03380](https://arxiv.org/html/2504.03380v2). DAPO, [arXiv 2503.14476](https://arxiv.org/pdf/2503.14476v2). No Regrets, [arXiv 2408.15099](https://arxiv.org/pdf/2408.15099)
-- HUD, [What is a good task](https://www.hud.ai/research/what-is-a-good-task)
 - Robocurve, [Six Easy Tasks](https://robocurve.org/blog/six-easy-tasks/)
 - Longer notes: `reports/RUA harness failure factors.md`
