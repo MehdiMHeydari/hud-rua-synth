@@ -37,7 +37,7 @@ Robocurve's Six Easy Tasks came out on my last day. Astra scores 0 of 36 there o
 
 ## What the failures have in common
 
-- **No margin.** Astra aims for 12 to 12.5 cm when 11.5 is asked. My scripted solution keeps a full centimetre of safety per block. The tool is only accurate to about a centimetre.
+- **It leaves no safety margin.** The further a block sticks out, the closer the stack is to tipping. The task only needs 11.5 cm, but Astra pushes the top block out to 12 or 12.5 cm, which makes its stack less stable than it has to be. My scripted solution does the opposite: it keeps every block a full centimetre back from the point where it would tip. That matters because the robot can only place a block to within about a centimetre, so a stack built right at the limit falls from one small placement error.
 - **It tests by letting go.** To check if a block is stable, it releases it and watches. A wrong guess ends the attempt.
 - **It misjudges small distances.** One stack stood fine half a centimetre short, and Astra reported it as "approximately 12 cm".
 
