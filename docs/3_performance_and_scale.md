@@ -33,6 +33,8 @@ What a bigger budget would buy:
 
 Six tasks looked hard for Astra. Three did not survive checking.
 
+The literature warned me, and I still underestimated it. JustRUA moved a benchmark score from 29.7 to 50.3 by changing only the harness, which is as much as a model generation. OpenAI found flawed tests in 59% of the SWE-bench Verified problems its model kept failing. I built the truth test early for that reason, and it caught the early bugs. It did not catch the ones below, because they only appear when an agent does something the scripted solution never does.
+
 | What we saw | What it was | After the fix |
 |---|---|---|
 | Astra says the drawer is closed and it isn't | The drawer slide had no friction and drifted open | 3/15 became 9/10 |
@@ -74,5 +76,14 @@ What also helped: a second model read the traces with no context and found the w
 
 ## Open questions
 
-- Why a 5-30% band, when around 50% is where a learner gets the most signal?
-- Which model defines the band? I tuned for sol first, then had to start over for Astra.
+- **Why a 5-30% band?** The papers I found on difficulty filtering argue for about 50%, where a pass/fail result carries the most signal (Online Difficulty Filtering, DAPO, No Regrets). A task at 5% carries about a fifth of the signal of one at 50%. HUD's own guide says a task is "often" hard at 50% or less. I kept the brief's band and would like to understand the reason for it.
+- **Which model defines the band?** I tuned for sol first, then had to start over for Astra.
+
+## Sources
+
+- JustRUA, [arXiv 2611.16009](https://arxiv.org/abs/2611.16009)
+- OpenAI on [SWE-bench Verified](https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/)
+- Online Difficulty Filtering, [arXiv 2504.03380](https://arxiv.org/html/2504.03380v2). DAPO, [arXiv 2503.14476](https://arxiv.org/pdf/2503.14476v2). No Regrets, [arXiv 2408.15099](https://arxiv.org/pdf/2408.15099)
+- HUD, [What is a good task](https://www.hud.ai/research/what-is-a-good-task)
+- Robocurve, [Six Easy Tasks](https://robocurve.org/blog/six-easy-tasks/)
+- Longer notes: `reports/RUA harness failure factors.md`
