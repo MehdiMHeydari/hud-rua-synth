@@ -1,0 +1,17 @@
+name: stand_up
+prompt: >-
+  The blue bar (16 x 4 x 4 cm) lies flat on the table. Stand it upright on one of its small square
+  ends, anywhere on the table. Leave it released and at rest.
+objects:
+  - {name: bar, shape: box, size: [0.16, 0.04, 0.04], color: blue, mass: 0.3, x: [0.45, 0.55], y: [-0.15, 0.15], yaw: [-60, 60]}
+success:
+  tipped: {object: bar, angle: 70}
+oracle:
+  - {at: bar, offset: [0.06, 0, 0.12], gripper: open}
+  - {at: bar, offset: [0.06, 0, 0], gripper: open}
+  - {at: bar, offset: [0.06, 0, 0], gripper: closed}
+  - {at: bar, offset: [0.06, 0, 0.25], gripper: closed}
+  - {at: bar, offset: [0.06, 0, 0.145], gripper: closed}
+  - {at: bar, offset: [0.06, 0, 0.145], gripper: open}
+  - {at: bar, offset: [0.06, 0, 0.30], gripper: open}
+knobs: {length_cm: 16, mass_kg: 0.3}
