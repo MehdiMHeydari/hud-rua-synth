@@ -4,7 +4,7 @@ Mehdi Heydari, HUD work trial, November 2026.
 
 You give this pipeline one sentence, like "test whether the agent can stack blocks out past a ledge". It writes a MuJoCo task for an LLM that drives a Franka arm with `move_to`, and then checks the task before any model is paid to try it.
 
-I used it to find out where GPT-6 Astra fails, and ended up with six tasks, five of them written by the generator.
+I used it to find out where GPT-6 Astra fails, and ended up with five tasks it finds hard, all of which the generator can write from a single sentence.
 
 ## Start here
 

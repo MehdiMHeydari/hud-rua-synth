@@ -83,7 +83,7 @@ The setup around the model matters as much as the model. JustRUA raised one benc
 |---|---|---|---|---|
 | max_overhang | `tasks/max_overhang.yaml` | Yes, from one sentence | 5 of 18 | [1](https://www.hud.ai/jobs/193ec7c258ab4d6a8730d7ab79144f26), [2](https://www.hud.ai/jobs/1652b36b603e4e66b43121918fe6aaa8), [3](https://www.hud.ai/jobs/423adafa92cc48febbc22d8a1cfe5c68) |
 | balance_sort | `tasks/balance_sort.yaml` | Yes, from one sentence | 1 of 12 | [1](https://www.hud.ai/jobs/6ca5c2608aea48dfb85781c7ff4dd899), [2](https://www.hud.ai/jobs/71b00f9d00244b08a137b0d87bfe33a3), [3](https://www.hud.ai/jobs/7aea5806aff543a585425c93a918b480) |
-| weighted_overhang | `tasks/weighted_overhang.yaml` | No | 0 of 12 | [1](https://www.hud.ai/jobs/3a19fb37768e49afb70514660a3acb7f), [2](https://www.hud.ai/jobs/2f29cee8ff454abf849e33412d0b3654), [3](https://www.hud.ai/jobs/d941c18f07d340e395c9fe23de0e6ec7), [4](https://www.hud.ai/jobs/522e6996f902453ab6b7db4ca8f7e653) |
+| weighted_overhang | `tasks/weighted_overhang.yaml` | Yes, starting from max_overhang | 0 of 12 | [1](https://www.hud.ai/jobs/3a19fb37768e49afb70514660a3acb7f), [2](https://www.hud.ai/jobs/2f29cee8ff454abf849e33412d0b3654), [3](https://www.hud.ai/jobs/d941c18f07d340e395c9fe23de0e6ec7), [4](https://www.hud.ai/jobs/522e6996f902453ab6b7db4ca8f7e653) |
 | balance_pick | `tasks/balance_pick.yaml` | Yes, from one sentence | 1 of 5 | [1](https://www.hud.ai/jobs/8b16fde453ee4fc2a8627a981134b14a) |
 | overhang_or_impossible | `tasks/overhang_or_impossible.yaml` | Yes, from one sentence | 3 of 5 | [1](https://www.hud.ai/jobs/fec577767283441394044b47c5531d9c) |
 
@@ -97,7 +97,7 @@ I wrote these specs by hand first, and the rollouts above ran on my versions. Th
 | overhang_or_impossible | 3 of 5 | 4 of 5 | [job](https://www.hud.ai/jobs/26809c2e12d74ea2993f5df18e8b6997) |
 | balance_sort | 1 of 12 | 0 of 5 | [job](https://www.hud.ai/jobs/96f6599ff40b4ce398c4982e7e2e3f99) |
 | balance_pick | 1 of 5 | 4 of 5 | [job](https://www.hud.ai/jobs/394a6c07ec5b4cb58509f3ba4d0c7d13) |
-| hidden_weight | not one of my five | 2 of 5, and 3 more lost to arm jams | [job](https://www.hud.ai/jobs/1b5de27bef1b458cbf247661b350de81) |
+| weighted_overhang | 0 of 12 | 0 of 4, and 1 more lost to an arm jam | [job](https://www.hud.ai/jobs/b2296a54129e44478e4615962696b0ec) |
 
 Three of the first four came out about as hard as mine. The generator also made its own choices: in one version of balance_sort it colour-coded the circles where I had used left-to-right order, and it added a height check to max_overhang that I hadn't thought of.
 
@@ -105,9 +105,9 @@ balance_pick came out much easier, and the reason is worth knowing. The generato
 
 Getting the balance tasks right took one fix. The generator's first versions laid the plank pointing away from the robot. That made Astra turn its wrist a quarter turn about three times per attempt, which set off the arm jam described in doc 3 in 6 of 10 attempts. I added one line to the generator's instructions, to lay long objects across the table. Its next versions did, and the arm didn't jam once in 10 attempts.
 
-That gives five tasks the generator made on its own, each with Astra rollouts: max_overhang, overhang_or_impossible, balance_sort, balance_pick and hidden_weight. hidden_weight is the weakest. Two blocks each hide a weight at one end and have to stick out past a ledge. The two attempts the arm jam didn't spoil were both successes, so it is probably not hard for Astra. I kept weighted_overhang as a sixth task because it is my hardest result, 0 of 12.
+So the generator rebuilt all five tasks, and four of the five came out as hard as my versions.
 
-weighted_overhang is the one task the generator couldn't produce. Its scripted solution has to stack four off-centre blocks so the tower still stands with every placement 5 mm off, and the generator didn't find one in the tries I gave it. Writing scripted solutions for delicate physical tasks is the generator's weak point. Doc 3 comes back to it.
+weighted_overhang took one more idea. Written from a blank page, the generator failed 13 times in a row: it could not find a stack of four off-centre blocks that still stands with every placement 5 mm off. So I gave it a new option, to start from a task that already passes every check and change only what the new task needs, the way GenSim2 builds new tasks out of accepted ones. Starting from max_overhang, it passed, and Astra scored 0 on it, the same as on mine.
 
 To run one yourself: `TASK=max_overhang HUD_LLM_MODEL=gpt-6-astra STEPS=60 EPISODES=5 python rua/run.py`
 

@@ -57,6 +57,7 @@ Two other things helped. A second model read the recordings with no context and 
 ## Bottlenecks
 
 - **The world stands still between moves.** The simulation only runs while the arm is moving, so nothing fast or reactive can be tested, like catching a rolling ball. This is the biggest gap. My lab teammate named fast, reactive manipulation as where these agents are weakest.
+- **Delicate scripted solutions.** The generator writes good tasks but struggles to write a solution that needs precise physical tuning. weighted_overhang failed 13 times from a blank page and passed first time once it could start from a similar task that already worked.
 - **The scripted solutions know too much.** They know the hidden weights. That proves the physics works, not that the task can be solved from what the agent can see. I wrote one solution that has to find the answer itself (it sorts the cubes using only the seesaw's tilt, 5 of 5). Every hidden-property task needs one.
 - **One robot.** Only the Franka arm, with one two-finger gripper. The brief says the pipeline should take robots as an input, and mine doesn't yet. Adding one means a second arm in the scene builder and re-tuning every grasp check.
 - **Solid objects only.** No bags, zips, screw threads, or tasks needing two hands. That rules out most of Robocurve's six tasks.

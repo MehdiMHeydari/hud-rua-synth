@@ -1,0 +1,80 @@
+name: g3_weighted_overhang
+prompt: >-
+  Four identical-looking blocks (14 x 4 x 3 cm; three blue, one red) lie flat on the table, crossways,
+  next to a white ledge 8 cm high. Each block is 50 g of wood with 100 g of lead hidden inside one of
+  its ends. The ends look the same, so you cannot see which end is heavy. Build a structure on the ledge
+  so that the red block's far end sticks out at least 15 cm past the ledge's near edge (the edge facing
+  the robot), measured toward the robot. The red block must rest on the structure, not on the table,
+  and every block must be released and at rest.
+objects:
+  # The edge faces the robot (yaw 180: the ledge's +x face is world -x), so the overhang hangs into
+  # open, reachable space. This is unchanged from max_overhang.
+  - {name: ledge, shape: platform, size: [0.20, 0.20, 0.08], color: white, x: [0.66, 0.67], y: [-0.01, 0.01], yaw: [180, 180]}
+  # The blocks start crossways, so carrying one to the ledge (yaw 0, lengthways) is one quarter turn of
+  # the wrist.
+  # v2: v1 gave start yaws independently of side. Its +y slot at x 0.61 had yaw -90: the tool sat at
+  # -90 deg while the arm pointed ~+25 deg (115 deg of wrist). The lift stalled (12 cm short) and the
+  # block was flung on seeds 1 and 2.
+  # Now each slot's yaw keeps the wrist within ~65 deg of the arm's direction: +y slots +90 (lead toward
+  # +y), -y slots -90 (lead toward -y). Grasping at block yaw and placing at tool yaw 0 then turns every
+  # block light end toward the robot.
+  # The shuffle still moves the red block (and each blue one) between slots per seed, so which way the
+  # red block's lead points varies. The ends look identical either way.
+  - {name: b1, shape: box, size: [0.14, 0.04, 0.03], color: blue, mass: 0.05, weight: 0.10, x: [0.40, 0.42], y: [0.25, 0.27], yaw: [80, 100]}
+  - {name: b2, shape: box, size: [0.14, 0.04, 0.03], color: blue, mass: 0.05, weight: 0.10, x: [0.40, 0.42], y: [-0.27, -0.25], yaw: [-100, -80]}
+  - {name: b3, shape: box, size: [0.14, 0.04, 0.03], color: blue, mass: 0.05, weight: 0.10, x: [0.60, 0.62], y: [-0.29, -0.27], yaw: [-100, -80]}
+  - {name: red, shape: box, size: [0.14, 0.04, 0.03], color: red, mass: 0.05, weight: 0.10, x: [0.60, 0.62], y: [0.27, 0.29], yaw: [80, 100]}
+shuffle: [[b1, b2, b3, red]]
+success:
+  overhang: {object: red, platform: ledge, beyond: 0.15}
+# Physics. The lead (0.10 kg) sits about 5-7 cm from the block's centre at its +x end, so the combined
+# centre of mass is about 4 cm (3.3-4.7) toward the heavy end. That puts it c ~ 11 cm (10.3-11.7) from
+# the light end.
+# Ideal (frictionless edge) book-stack reach is c1 + c2/2 + c3/3 + c4/4, where c_k is the distance from
+# block k's centre of mass to its outer end (k = 1 at the top):
+#   - all four light end out: ~22.9 cm
+#   - uniform blocks: 14.6 cm
+#   - red heavy end out, the rest light end out: <= 14.9 cm
+#   - only red light end out: ~14.3 cm
+# So 15 cm needs the red block light end out plus at least one more correctly turned block. The intent's
+# "every block" is not strictly required; forcing that would need a threshold above 20.9 cm, within
+# ~2 cm of the ideal maximum.
+# Oracle: outer (light) ends at 2, 5, 9 and 17 cm past the face. Centre-of-mass margins are >= 2 cm for
+# c = 10.3 cm and stay >= 1 cm down to c = 9.3 cm. Every partial stack is stable while building.
+# Block centres in the ledge frame are 0.05, 0.08, 0.12, 0.20. Each block is grasped 4 cm toward its
+# heavy end, over its centre of mass. After placement (block yaw 0 world = ledge -x) the tool sits 4 cm
+# inward of the centre: ledge x 0.01, 0.04, 0.08, 0.16.
+oracle:
+  - {at: b1, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: b1, offset: [0.04, 0, 0], gripper: open}
+  - {at: b1, offset: [0.04, 0, 0], gripper: closed}
+  - {at: b1, offset: [0.04, 0, 0.12], gripper: closed}
+  - {at: ledge, offset: [0.01, 0, 0.195], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.01, 0, 0.100], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.01, 0, 0.100], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.01, 0, 0.195], yaw: 180, gripper: open}
+  - {at: b2, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: b2, offset: [0.04, 0, 0], gripper: open}
+  - {at: b2, offset: [0.04, 0, 0], gripper: closed}
+  - {at: b2, offset: [0.04, 0, 0.12], gripper: closed}
+  - {at: ledge, offset: [0.04, 0, 0.225], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.04, 0, 0.130], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.04, 0, 0.130], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.04, 0, 0.225], yaw: 180, gripper: open}
+  - {at: b3, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: b3, offset: [0.04, 0, 0], gripper: open}
+  - {at: b3, offset: [0.04, 0, 0], gripper: closed}
+  - {at: b3, offset: [0.04, 0, 0.12], gripper: closed}
+  - {at: ledge, offset: [0.08, 0, 0.255], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.08, 0, 0.160], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.08, 0, 0.160], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.08, 0, 0.255], yaw: 180, gripper: open}
+  - {at: red, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: red, offset: [0.04, 0, 0], gripper: open}
+  - {at: red, offset: [0.04, 0, 0], gripper: closed}
+  - {at: red, offset: [0.04, 0, 0.12], gripper: closed}
+  - {at: ledge, offset: [0.16, 0, 0.285], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.16, 0, 0.190], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.16, 0, 0.190], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.16, 0, 0.285], yaw: 180, gripper: open}
+knobs: {blocks: 4, overhang_cm: 15, block_cm: 14, lead_kg: 0.10, block_kg: 0.05, margin_mm: 20, oracle_reach_cm: 17, lead_side: away_from_ledge_per_slot}
