@@ -1,0 +1,35 @@
+name: loose_tray
+prompt: >-
+  A wide red block sits on a thin blue tray. Slide the red block off the tray so that it rests on the
+  table with its centre within 6 cm of the green circle's centre. The block is too wide to grasp. The tray
+  must end within 5 cm of where it started. Leave everything released and at rest.
+objects:
+  # Block on tray: friction 1 (priority 2 beats the tray). Tray on table: 0.4 (priority 1 beats the table).
+  # A push drags the tray: block-tray can pass 1.0 x 0.25 kg x g = 2.5 N, the tray holds 0.4 x 0.35 kg x g = 1.4 N.
+  # The 1 kg cube on the tray raises that to 5.3 N.
+  - {name: tray, shape: box, size: [0.24, 0.24, 0.012], color: blue, mass: 0.1, friction: 0.4, priority: 1,
+     x: [0.49, 0.51], y: [-0.07, -0.05]}
+  - {name: block, shape: box, size: [0.12, 0.12, 0.06], color: red, mass: 0.25, friction: 1.0, priority: 2,
+     x: [0.49, 0.51], y: [-0.07, -0.05], z: 0.012}
+  - {name: weight, shape: box, size: [0.04, 0.04, 0.04], color: yellow, mass: 1.0, friction: 2.0,
+     x: [0.66, 0.68], y: [-0.26, -0.24]}
+  - {name: goal, shape: zone, size: [0.16], color: green, x: [0.49, 0.51], y: [0.21, 0.23]}
+# Tray tol 5 cm: even weighted, MuJoCo's soft contacts let the tray creep ~3 cm over the push (unweighted: 25 cm).
+success:
+  in_zone: {object: block, zone: goal, radius: 0.06}
+  unmoved: {objects: [tray], tol: 0.05}
+oracle:
+  # Weigh the tray down with the cube (on its far-left corner, clear of the block's path), then push.
+  - {at: weight, offset: [0, 0, 0.15], gripper: open}
+  - {at: weight, gripper: open}
+  - {at: weight, gripper: closed}
+  - {at: weight, offset: [0, 0, 0.15], gripper: closed}
+  - {at: tray, offset: [0.085, -0.085, 0.15], gripper: closed}
+  - {at: tray, offset: [0.085, -0.085, 0.04], gripper: closed}
+  - {at: tray, offset: [0.085, -0.085, 0.04], gripper: open}
+  - {at: tray, offset: [0.085, -0.085, 0.15], gripper: open}
+  - {at: block, offset: [0, -0.10, 0.10], yaw: 90, gripper: closed}
+  - {at: block, offset: [0, -0.10, 0.01], yaw: 90, gripper: closed}
+  - {at: goal, offset: [0, -0.075, 0.042], yaw: 90, gripper: closed}
+  - {at: goal, offset: [0, -0.075, 0.15], yaw: 90, gripper: open}
+knobs: {block_mass: 0.25, tray_friction: 0.4, weight_mass: 1.0}

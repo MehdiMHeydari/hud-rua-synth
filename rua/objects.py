@@ -16,7 +16,7 @@ import yaml
 GEOMS = {"box": mujoco.mjtGeom.mjGEOM_BOX, "cylinder": mujoco.mjtGeom.mjGEOM_CYLINDER,
          "sphere": mujoco.mjtGeom.mjGEOM_SPHERE}
 PRIMITIVES = tuple(GEOMS)
-COMPOUND = ("hook",)  # free bodies made of several boxes
+COMPOUND = ("hook", "lidbox")  # free bodies made of several boxes (lidbox: plus a sliding lid)
 ARTICULATED = ("drawer",)
 FIXED = ("hole_block", "zone", "platform", "seesaw")  # seesaw: fixed fulcrum, its plank tilts on a hinge
 ASSET = ("asset",)  # a free body from the library; size and mass come from its catalog card
@@ -27,6 +27,7 @@ CATALOG = {c["id"]: c for c in yaml.safe_load((ASSET_DIR / "catalog.yaml").read_
 WALL = 0.01  # cabinet wall thickness (m)
 HANDLE_OUT = 0.06  # pull tab length out of the drawer face
 HOOK_GRIP = 0.05  # hook: grasp point's distance from the handle's free end
+LID = 0.015  # lidbox: lid thickness (m)
 
 
 def base_z(shape: str, size: list[float]) -> float:
@@ -41,6 +42,8 @@ def part_offset(shape: str, size: list[float], part: str | None) -> np.ndarray:
     if shape == "drawer" and part == "handle":
         depth, _, height = size
         return np.array([-depth / 2 - 0.75 * HANDLE_OUT, 0.0, height / 2])  # near the tab's outer end
+    if shape == "lidbox" and part == "handle":  # the lid's pull tab, pinched from the sides
+        return np.array([-size[0] / 2 - 0.75 * HANDLE_OUT, 0.0, size[2] / 2 - LID / 2])
     if shape == "hook" and part == "handle":
         return np.array([-size[0] / 2 + HOOK_GRIP, 0.0, 0.0])
     raise ValueError(f"{shape} has no part {part!r}")
@@ -48,7 +51,8 @@ def part_offset(shape: str, size: list[float], part: str | None) -> np.ndarray:
 
 def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mass: float,
         travel: float = 0.2, damping: float = 2.0, hole: float = 0.04, asset: str | None = None,
-        friction: float = 1.0, pivot: float = 0.05, weight: float = 0.0, loose: bool = False) -> None:
+        friction: float = 1.0, pivot: float = 0.05, weight: float = 0.0, loose: bool = False,
+        stiction: float = 2.0, priority: int = 0) -> None:
     """Add one object to the scene. Primitives and compounds are free bodies; templates are fixed to the table."""
     if shape in PRIMITIVES:
         body = spec.worldbody.add_body(name=name)
@@ -56,12 +60,14 @@ def add(spec: mujoco.MjSpec, name: str, shape: str, size: list[float], rgba, mas
         # Spec sizes are full lengths; MuJoCo wants halves (cylinder: radius, half-height).
         # condim=4 adds twisting friction so grasped objects don't pivot about the finger axis.
         body.add_geom(type=GEOMS[shape], size=[v / 2 for v in size], rgba=rgba, mass=mass, condim=4,
-                      friction=[friction, 0.005, 0.0001])
+                      friction=[friction, 0.005, 0.0001], priority=priority)
         if weight:  # hidden lead near the +x end: no contact, invisible, shifts the centre of mass only
             body.add_geom(type=GEOMS["sphere"], size=[0.005], pos=[size[0] / 2 - 0.01, 0, 0], mass=weight,
                           contype=0, conaffinity=0, rgba=[0, 0, 0, 0], group=3)
     elif shape == "hook":
         _add_hook(spec, name, size, rgba, mass)
+    elif shape == "lidbox":
+        _add_lidbox(spec, name, size, rgba, mass, friction, damping, stiction)
     elif shape == "drawer":
         _add_drawer(spec, name, size, rgba, mass, travel, damping, loose)
     elif shape == "hole_block":
@@ -95,6 +101,31 @@ def _add_hook(spec, name, size, rgba, mass) -> None:
                       ([length / 2 - t / 2, reach / 2, 0], [t / 2, reach / 2, t / 2])):
         body.add_geom(type=GEOMS["box"], pos=pos, size=half, rgba=rgba, mass=mass / 2, condim=4,
                       friction=[1, 0.1, 0.0001])
+
+
+def _add_lidbox(spec, name, size, rgba, mass, friction, damping, stiction) -> None:
+    """Free box (origin at its centre) with a lid that slides out toward -x on a joint `<name>_slide`
+    (range: its own length, so fully open = clear of the box). `stiction` (N) holds the lid in its
+    grooves; `friction` is the box's on the table and wins over it (priority), so a light,
+    slippery box rides along with a pulled lid unless something stops it."""
+    d, w, h = size
+    box = mujoco.mjtGeom.mjGEOM_BOX
+    body = spec.worldbody.add_body(name=name)
+    body.add_freejoint()
+    body.add_geom(type=box, pos=[0, 0, -LID / 2], size=[d / 2, w / 2, (h - LID) / 2], rgba=[0.75, 0.75, 0.75, 1],
+                  mass=mass * 0.8, condim=4, priority=1, friction=[friction, 0.005, 0.0001])
+    lid = body.add_body(name=f"{name}_lid", pos=[0, 0, h / 2 - LID / 2])
+    spec.add_exclude(bodyname1=name, bodyname2=f"{name}_lid")  # rides in its grooves, not on the box
+    lid.add_joint(name=f"{name}_slide", type=mujoco.mjtJoint.mjJNT_SLIDE, axis=[-1, 0, 0], range=[0, d],
+                  damping=damping, frictionloss=stiction,
+                  # MuJoCo's friction loss is soft: at the default solref a 0.9 N drag crept the lid 11% open per
+                  # 20 cm pull, so repeated unbraced pulls would open it. Stiffest stable (2 x timestep): 2.5%.
+                  solref_friction=[0.002, 1], solimp_friction=[0.99, 0.999, 0.001, 0.5, 2])
+    lid.add_geom(type=box, size=[d / 2, w / 2, LID / 2], rgba=rgba, mass=mass * 0.15)
+    # Same pull tab as the drawer's, at lid height: torsional friction 0.1 (hook) so a box lifted
+    # by it doesn't swing about the finger axis.
+    lid.add_geom(type=box, pos=[-d / 2 - HANDLE_OUT / 2, 0, 0], size=[HANDLE_OUT / 2, 0.01, 0.0125],
+                 rgba=rgba, mass=mass * 0.05, condim=4, friction=[1, 0.1, 0.0001])
 
 
 # Static friction on the slide (N). Without it, pulling the hand back after pushing the drawer shut

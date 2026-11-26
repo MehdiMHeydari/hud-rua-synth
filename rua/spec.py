@@ -26,10 +26,13 @@ class Obj(BaseModel):
     shape: Literal[objects.PRIMITIVES + objects.COMPOUND + objects.ARTICULATED + objects.FIXED + objects.ASSET]
     size: list[float]  # metres, full lengths. box/drawer/hole_block/platform: [x, y, z]; cylinder: [diameter, height]; sphere: [diameter]
     # zone: [diameter] (circle) or [x, y] (rectangle)
-    # hook: [handle length, crossbar length, thickness]; asset: filled from its catalog card (bbox), never set
+    # hook: [handle length, crossbar length, thickness]; lidbox: [x, y, z] incl. its lid (slides out toward -x, part: handle); asset: filled from its catalog card (bbox), never set
     color: Literal[tuple(COLORS)] | None = None  # required except for assets (textured)
     mass: float = 0.1  # asset: defaults to its card's mass
     friction: float = 1.0  # primitives and platforms only (MuJoCo uses the larger of two touching geoms', so it also sets grip)
+    # primitives only: in a contact the higher priority's friction wins (table 0), so `friction` below 1 can make
+    # an object slippery on the table; equal priorities use the larger of the two
+    priority: int = 0
     asset: str | None = None  # asset only: a catalog id (assets/catalog.yaml)
     x: tuple[float, float]  # placement range on the table, sampled per seed
     y: tuple[float, float]
@@ -37,6 +40,7 @@ class Obj(BaseModel):
     z: float = 0.0  # height of the surface it starts on (e.g. a platform's height); 0 = the table
     weight: float = 0.0  # box only: hidden lead (kg) at the object's own +x end, invisible; looks uniform
     pivot: float = 0.05  # seesaw only: hinge height above the table (m); size is the plank [length, width, thickness]
+    stiction: float = 2.0  # lidbox only: static friction holding the lid in its grooves (N)
     travel: float = 0.2  # drawer only: how far it slides out (m)
     damping: float = 2.0  # drawer: resistance to sliding (N*s/m), a difficulty knob; seesaw: to swinging (N*m*s/rad)
     loose: bool = False  # drawer only: cabinet not fixed but a light free body on slippery feet (pulling drags it)
@@ -325,7 +329,7 @@ class TaskSpec(BaseModel):
         for o in (o for o in self.objects if self.present(o, sim.seed)):
             pos = [round(float(v) * 1000) for v in sim.body_pos(o.name)]
             out[o.name] = {"pos_mm": pos, "held": bool(objects.touching_robot(sim.model, sim.data, o.name))}
-            if o.shape in objects.ARTICULATED:
+            if o.shape in objects.ARTICULATED + ("lidbox",):
                 out[o.name]["open"] = round(objects.joint_fraction(sim.model, sim.data, o.name)[0], 3)
             if o.shape == "seesaw":
                 out[o.name]["tilt_deg"] = round(objects.seesaw_tilt(sim.model, sim.data, o.name), 1)

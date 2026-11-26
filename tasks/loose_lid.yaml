@@ -1,0 +1,29 @@
+name: loose_lid
+prompt: >-
+  A small grey box with a red sliding lid sits on the table. The lid slides out of its grooves toward
+  the robot; pull it by its tab. A low white block is fixed to the table. Slide the lid fully open,
+  all the way out of its grooves, and release it.
+objects:
+  - {name: box, shape: lidbox, size: [0.14, 0.12, 0.08], color: red, mass: 0.3, friction: 0.3, stiction: 3.0,
+     damping: 1.0, x: [0.55, 0.56], y: [-0.01, 0.01]}
+  - {name: curb, shape: platform, size: [0.04, 0.16, 0.04], color: white, x: [0.46, 0.46], y: [0.19, 0.19]}
+success:
+  opened: {object: box, fraction: 0.9}
+oracle:
+  # Push the box sideways till it is in line with the curb, then from behind against it; the box then
+  # sits at a known spot (curb frame), so the tab is found whatever the box slid. Pulling now: the curb holds it.
+  - {at: box, offset: [0, -0.12, 0.10], yaw: 90, gripper: closed}
+  - {at: box, offset: [0, -0.12, 0.0], yaw: 90, gripper: closed}
+  - {at: box, offset: [0, 0.11, 0.0], yaw: 90, gripper: closed}
+  - {at: box, offset: [0, 0.11, 0.10], yaw: 90, gripper: closed}
+  - {at: box, offset: [0.12, 0.185, 0.10], gripper: closed}
+  - {at: box, offset: [0.12, 0.185, 0.0], gripper: closed}
+  - {at: curb, offset: [0.175, 0, 0.04], gripper: closed}
+  - {at: curb, offset: [0.175, 0, 0.14], gripper: open}
+  - {at: curb, offset: [-0.025, 0, 0.17], gripper: open}
+  - {at: curb, offset: [-0.025, 0, 0.0725], gripper: open}
+  - {at: curb, offset: [-0.025, 0, 0.0725], gripper: closed}
+  - {at: curb, offset: [-0.185, 0, 0.0725], gripper: closed}
+  - {at: curb, offset: [-0.185, 0, 0.0725], gripper: open}
+  - {at: curb, offset: [-0.185, 0, 0.17], gripper: open}
+knobs: {box_mass: 0.3, box_friction: 0.3, lid_stiction_n: 3.0}
