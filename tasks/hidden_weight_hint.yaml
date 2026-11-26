@@ -1,0 +1,40 @@
+name: hidden_weight_hint
+prompt: >-
+  A white ledge 8 cm high stands on the table. Place both red blocks (14 x 4 x 3 cm each) flat on top of
+  the ledge, side by side, so that one end of each sticks out at least 8 cm past the ledge's near edge (the edge facing
+  the robot), measured toward the robot. Neither block's weight is evenly spread along its length.
+  Hint: grip a block at the middle of its length and lift it: the heavy end sags down.
+  Leave both released and at rest on the ledge.
+objects:
+  # 50 g block + 100 g hidden lead 6 cm from its centre: centre of mass 4 cm toward the lead end.
+  # Light end out it balances up to 11 cm past the edge; uniform it would stop at 7, lead end out at 3.
+  # Two blocks, so ignoring the lead passes by luck 1 time in 4, not 1 in 2. The random yaw hides which end holds the lead; lifting it off-centre tilts it, so it can be found.
+  - {name: ledge, shape: platform, size: [0.20, 0.20, 0.08], color: white, x: [0.66, 0.67], y: [-0.01, 0.01], yaw: [180, 180]}
+  - {name: red, shape: box, size: [0.14, 0.04, 0.03], color: red, mass: 0.05, weight: 0.10,
+     x: [0.42, 0.46], y: [0.20, 0.26], yaw: [-150, 150]}
+  - {name: red2, shape: box, size: [0.14, 0.04, 0.03], color: red, mass: 0.05, weight: 0.10,
+     x: [0.42, 0.46], y: [-0.26, -0.20], yaw: [-150, 150]}
+success:
+  overhang:
+    - {object: red, platform: ledge, beyond: 0.08}
+    - {object: red2, platform: ledge, beyond: 0.08}
+# Grasp over the centre of mass (4 cm toward the lead) so it doesn't swing; place with the lead away
+# from the robot (tool yaw 0) and the light end 9 cm past the face (centre of mass 2 cm behind it).
+oracle:
+  - {at: red, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: red, offset: [0.04, 0, 0], gripper: open}
+  - {at: red, offset: [0.04, 0, 0], gripper: closed}
+  - {at: red, offset: [0.04, 0, 0.15], gripper: closed}
+  - {at: ledge, offset: [0.08, -0.07, 0.20], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.08, -0.07, 0.098], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.08, -0.07, 0.098], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.08, -0.07, 0.20], yaw: 180, gripper: open}
+  - {at: red2, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: red2, offset: [0.04, 0, 0], gripper: open}
+  - {at: red2, offset: [0.04, 0, 0], gripper: closed}
+  - {at: red2, offset: [0.04, 0, 0.15], gripper: closed}
+  - {at: ledge, offset: [0.08, 0.07, 0.20], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.08, 0.07, 0.098], yaw: 180, gripper: closed}
+  - {at: ledge, offset: [0.08, 0.07, 0.098], yaw: 180, gripper: open}
+  - {at: ledge, offset: [0.08, 0.07, 0.20], yaw: 180, gripper: open}
+knobs: {lead_kg: 0.10, beyond_cm: 8}
