@@ -14,11 +14,25 @@ Asked for an overhang that two blocks cannot reach, it answers in one call: "14/
 
 **Then two things changed the plan.** Lukass pointed out that labs already train on standard manipulation, and asked for tasks outside pick-and-place. And when I ran Astra on the seven, it scored 40-100%. The standard families were no longer hard.
 
-**So I asked what the literature says is not improving.** RoboARCade reports that failures come "mostly from choosing a poor manipulation strategy or executing a good one imprecisely, rarely from misunderstanding the scene". The Bitter Lesson study on real arms describes trials ending on an unrecoverable error, such as knocking an object off the table. Robocurve's Six Easy Tasks (Nov 2026) has Astra at 0/36 on real robots, and every failure they describe is physical: a dropped key, a bottle cap that never threads, a backpack that slides instead of being held. A teammate in my lab said the same from experience: fast, contact-rich manipulation.
+**So I asked what the literature says is not improving.** RoboARCade reports that failures come "mostly from choosing a poor manipulation strategy or executing a good one imprecisely, rarely from misunderstanding the scene". The Bitter Lesson study on real arms describes trials ending on an unrecoverable error, such as knocking an object off the table. A teammate in my lab said the same from experience: fast, contact-rich manipulation is where these agents break.
 
 **That gave me a recipe.** Pick tasks where the right strategy is easy to know, the margin for carrying it out is thin, and one mistake cannot be undone. Stacking blocks out past an edge fits: the answer is a textbook result, and one bad placement puts a block on the floor. Weighing on a seesaw fits too: the method is obvious, and the surface moves under you.
 
-**Last, I gave each hard task an easier sibling.** A low score alone doesn't say whether the model lacked the idea or the execution. balance_pick asks for a third of balance_sort's work. overhang_or_impossible asks whether Astra can work out the limit without building anything. The answers are in the table below.
+**Last, I gave each hard task an easier sibling.** A low score alone doesn't say whether the model lacked the idea or the execution, so two of the five tasks exist only to answer that.
+
+**Robocurve's Six Easy Tasks came out on the last day**, after the stacking and balance tasks were built. Astra scores 0/36 there on real robots, and every failure is physical: a dropped key, a bottle cap that never threads, a backpack that slides instead of being held. It backed up the direction. I also built three tasks straight from it (bracing a loose drawer, picking up a thin card, standing a bar upright), and none of them held up as hard in our sim. They are in the "weren't" list further down.
+
+## The five tasks, one at a time
+
+**max_overhang.** I wanted a statics problem with a known answer. This is the book-stacking problem: how far can a stack lean out past an edge? With 14 cm blocks, one block reaches 7 cm, two reach 10.5, and four reach 14.6 at best. I set the target at 11.5 cm so it needs at least three blocks, each offset correctly, and can't be done by trial and error on one block. What I expected to be hard: every placement shifts the balance of everything above it, and a block that falls off the ledge is gone. My first scripted solution used 7 mm of safety per block and fell over on every seed, which told me the margins would matter before any model ran.
+
+**balance_sort.** An earlier task, heavy_cube, hid one heavy cube among identical ones. Astra solved it 5/5 by pushing each cube and feeling which one resisted. That worked because the heavy cube was five times heavier. So I made the weights close (100, 150 and 220 g), where a push or a lift tells you nothing, and put a balance on the table. Now the only way to know is to measure, and the agent has to plan which pairs to compare. What I expected to be hard: planning the comparisons. What turned out to be hard: getting cubes on and off a plank that tilts. Before trusting the result I wrote a solution that sorts the cubes from the plank's tilt alone, to prove it could be done. It works 5/5.
+
+**weighted_overhang.** This puts the two ideas together. Each block has a weight hidden at one end, so its balance point is off-centre, and you can't see which end. The target is 15 cm, which is past what four ordinary blocks can reach (14.6), so the task can only be done by finding each block's light end and pointing it outward. What I expected to be hard: it needs both the measuring from balance_sort and the careful stacking from max_overhang, and a mistake in either ends the attempt.
+
+**balance_pick.** The easier sibling of balance_sort. Same cubes, same balance, but only the heaviest has to be found: two weighings and one placement, about half the steps. I built it to answer one question. balance_sort's failures all ended close to the step limit, so was it hard, or just long? If Astra passed this, the answer was "long". It scored 1/5, and in all three failures where it named a cube it named the right one and then dropped it. So the balance itself is the problem.
+
+**overhang_or_impossible.** The easier sibling of max_overhang. On half the seeds there are only two blocks, which can reach 10.5 cm at most, so the 11.5 cm target can't be met and the right answer is to say so. It came from an earlier task where Astra, offered the option to call a task impossible, gave up on two of five that could be done. I wanted to know whether Astra understands the limit or just tries things. It understands it exactly: on the two-block seeds it gave the formula in one or two calls and touched nothing. On the four-block seeds it passed one of three. That is the cleanest evidence for the headline: the knowledge is there and the building fails.
 
 ## What Astra handles
 
@@ -32,13 +46,13 @@ Asked for an overhang that two blocks cannot reach, it answers in one call: "14/
 
 Counts are clean episodes only: no arm jam, no harness bug. Doc 3 explains why that matters.
 
-| Task | What it asks | Why I built it | Astra | What goes wrong |
-|---|---|---|---|---|
-| max_overhang | Stack four blocks on a ledge so the top one sticks out 11.5 cm | Known answer (the book-stacking problem), thin margin, a fall can't be undone | 5/18 | The stack tips when the last block is released |
-| weighted_overhang | Same, but each block hides a weight at one end and 15 cm is asked | Adds something it has to find out by handling the blocks | 0/12 | The supports tip while it is still stacking |
-| balance_sort | Order three identical-looking cubes by weight, using a seesaw as a balance | The answer can't be seen, only measured | 1/12 | It reads the balance correctly, then loses cubes on the tilting plank |
-| balance_pick | Same scene, only find the heaviest | Easier sibling: is balance_sort hard because it is long, or because of the balance? | 1/5 | In all 3 failures where it named a cube it named the right one, then dropped it |
-| overhang_or_impossible | max_overhang, but on half the seeds only two blocks exist and the right answer is "impossible" | Easier sibling: does it know the limit? | 3/5 | Impossible seeds 2/2. Buildable seeds 1/3 |
+| Task | What it asks | Astra | What goes wrong |
+|---|---|---|---|
+| max_overhang | Stack four blocks on a ledge so the top one sticks out 11.5 cm | 5/18 | The stack tips when the last block is released |
+| weighted_overhang | Same, but each block hides a weight at one end and 15 cm is asked | 0/12 | The supports tip while it is still stacking |
+| balance_sort | Order three identical-looking cubes by weight, using a seesaw as a balance | 1/12 | It reads the balance correctly, then loses cubes on the tilting plank |
+| balance_pick | Same scene, only find the heaviest | 1/5 | In all 3 failures where it named a cube it named the right one, then dropped it |
+| overhang_or_impossible | max_overhang, but on half the seeds only two blocks exist and the right answer is "impossible" | 3/5 | Impossible seeds 2/2. Buildable seeds 1/3 |
 
 Three things the traces show:
 
