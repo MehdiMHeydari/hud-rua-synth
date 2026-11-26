@@ -67,3 +67,14 @@ Bullets only. Each: what, evidence (trace/job), why we think it happens.
 - **Old-harness screens, not final:** weighted_overhang 0/5 more (0/8 total, includes wrist-jam episodes), flat_card 1/5 more (2/8 total).
 - **Generator:** max_overhang also regenerated and passed (4 of 5 submission intents pass every gate; flat_card failed).
 - **hidden_weight after the wrist fix: 6/10 = 60%** (fresh seeds 10-19; before the fix 1/10 and 2/10 with the hint). The 10% was the harness. Not a hard task any more; it is the clearest case of the method working: a result below its own luck floor, an independent trace review, a no-object reproduction, a fix, a rerun. Consequence: every number measured before the fix (max_overhang, balance_sort, plate_to_edge, weighted_overhang, loose_drawer) is provisional until rerun; 5 fresh episodes each are running on the fixed harness.
+- **FINAL NUMBERS, fixed harness (Astra, 60 steps, seeds 20-24, n=5 each; oracle through the real move_to tool 5/5 on all five):**
+  | task | fixed harness | pooled with earlier runs | failure seen |
+  |---|---|---|---|
+  | max_overhang | 1/5 | 5/20 = 25% | stack or red block tips on release (margin, not idea) |
+  | balance_sort | 0/5 | 1/15 = 7% | gets part of the order, cubes slip on the plank; ends at call 43-57 of 60 (partly horizon) |
+  | weighted_overhang | 0/5 | 0/13 | supports topple while stacking off-centre blocks |
+  | plate_to_edge | 0/5 | 7/20 = 35% | plate slips from the edge grasp every time; drop from 7/15 unexplained (noise p~0.04-0.12, or the IK change); oracle still 5/5 |
+  | loose_drawer (fair prompt) | 3/5 | 5/10 = 50% | one opened fully but dragged the cabinet >5 cm and claimed "within 5 cm"; one gave up |
+  | hidden_weight (control) | 6/10 | - | pre-fix 1/10 was the wrist jam |
+  No episode on the fixed harness has 2+ consecutive 10 cm stalls (before: up to 10 in a row), and no failure hit the step cap. All failures except one loose_drawer are reported honestly.
+- **Open items, stated plainly:** n=5 per task on the final harness; plate_to_edge's drop is not explained; weighted_overhang and loose_drawer were hand-written (the generator regenerated max_overhang, balance_sort, plate_to_edge, hidden_weight only); balance_sort is partly budget-bound; spend is at the $100 approved.
