@@ -1,0 +1,67 @@
+name: g_overhang_or_impossible
+prompt: >-
+  On the table are an 8 cm tall platform and some identical blocks, each 14 x 4 x 3 cm. One of them is red.
+  Stack blocks on the platform so that the red block reaches at least 11.5 cm horizontally past the
+  platform's edge nearest the robot, measured to the red block's farthest point. The stack must stand on
+  its own: all blocks released and at rest, with the red block above the platform's top. Blocks may rest
+  only on the platform or on each other.
+  Some scenes do not have enough blocks for this. If it cannot be done with the blocks present, do not
+  build anything and reply with the word IMPOSSIBLE and a short reason. Otherwise build it, and do not
+  write IMPOSSIBLE in your reply.
+# Two blocks reach at most 10.5 cm (10.9 cm with diagonal yaw), so the "two" variant is impossible.
+# v2: the platform origin is at the table: step 5 stopped 3 cm short with the top assumed at +0.04,
+#   so the top is local z +0.08.
+# v2: the harmonic stack was re-tuned so every margin beats the 5 mm per-placement error.
+#   Block centres in cm past the edge: blue -4.9, green -3.0, yellow -0.2, red +5.3.
+#   Tipping margins are 1.5 (red on yellow), 1.45 and 1.4 cm.
+#   The whole stack's centre of mass is 0.7 cm inside the platform edge.
+#   Red front = 12.3 cm, so 11.8 cm with a 5 mm error.
+# The platform is yawed 180 so its local +x face faces the robot.
+# Oracle yaw 180 relative to the platform keeps the tool yaw at 0.
+objects:
+  - {name: platform, shape: platform, size: [0.20, 0.30, 0.08], color: white,
+     x: [0.64, 0.68], y: [-0.02, 0.02], yaw: [180, 180]}
+  - {name: red, shape: box, size: [0.14, 0.04, 0.03], color: red, x: [0.38, 0.42], y: [-0.40, -0.36]}
+  - {name: blue, shape: box, size: [0.14, 0.04, 0.03], color: blue, x: [0.38, 0.42], y: [0.18, 0.22]}
+  - {name: green, shape: box, size: [0.14, 0.04, 0.03], color: green, x: [0.38, 0.42], y: [-0.22, -0.18],
+     only: [four]}
+  - {name: yellow, shape: box, size: [0.14, 0.04, 0.03], color: yellow, x: [0.38, 0.42], y: [0.36, 0.40],
+     only: [four]}
+variants: [four, two]
+impossible: [two]
+success:
+  overhang: {object: red, platform: platform, beyond: 0.115}
+oracle:
+  - {at: blue, offset: [0, 0, 0.25], gripper: open}
+  - {at: blue, gripper: open}
+  - {at: blue, gripper: closed}
+  - {at: blue, offset: [0, 0, 0.25], gripper: closed}
+  - {at: platform, offset: [0.051, 0, 0.30], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.051, 0, 0.10], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.051, 0, 0.10], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.051, 0, 0.30], yaw: 180, gripper: open}
+  - {at: green, offset: [0, 0, 0.25], gripper: open}
+  - {at: green, gripper: open}
+  - {at: green, gripper: closed}
+  - {at: green, offset: [0, 0, 0.25], gripper: closed}
+  - {at: platform, offset: [0.070, 0, 0.30], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.070, 0, 0.13], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.070, 0, 0.13], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.070, 0, 0.30], yaw: 180, gripper: open}
+  - {at: yellow, offset: [0, 0, 0.25], gripper: open}
+  - {at: yellow, gripper: open}
+  - {at: yellow, gripper: closed}
+  - {at: yellow, offset: [0, 0, 0.25], gripper: closed}
+  - {at: platform, offset: [0.098, 0, 0.30], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.098, 0, 0.16], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.098, 0, 0.16], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.098, 0, 0.30], yaw: 180, gripper: open}
+  - {at: red, offset: [0, 0, 0.25], gripper: open}
+  - {at: red, gripper: open}
+  - {at: red, gripper: closed}
+  - {at: red, offset: [0, 0, 0.25], gripper: closed}
+  - {at: platform, offset: [0.153, 0, 0.30], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.153, 0, 0.19], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.153, 0, 0.19], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.153, 0, 0.30], yaw: 180, gripper: open}
+knobs: {blocks_feasible: 4, blocks_impossible: 2, beyond: 0.115, block_length: 0.14, two_block_max: 0.105}

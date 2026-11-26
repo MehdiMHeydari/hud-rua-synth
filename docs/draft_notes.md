@@ -59,7 +59,7 @@ Story in three lines:
   - Asset admission: compile, size, rest, drop, cavity, grasp, release, vision.
   - Paid: calibrate on the target model; flags on every run (step cap, jammed, near budget); trace review; replay.
 - Harness: HUD DirectControl `move_to` (the SDK serves one motion tool per env; `move_joints` is a launch switch we scoped, not built), top + wrist cameras, grasp line, stall line, binary gripper, final-state grading per condition.
-- Generator record (`runs/generator_log.jsonl`): 6 of 9 intents accepted, 1-5 rounds (+3 running). Final five: max_overhang and balance_sort came from the generator; the other three were hand-written first, regeneration running.
+- Generator record (`runs/generator_log.jsonl`): 8 of 12 intents accepted, 1-5 rounds. Final five: all hand-written first; the generator then rebuilt four from a one-line intent (max_overhang, balance_sort, balance_pick, overhang_or_impossible) and failed on weighted_overhang after 5 rounds.
 - Diagram: `docs/pipeline_diagram.md`.
 
 ### The five tasks and their rollouts (Astra, 60 steps; traces on hud.ai by job id, local copies in runs/traces/)
@@ -116,7 +116,6 @@ Story in three lines:
 
 ## Open items before submitting
 
-- Regeneration of weighted_overhang, balance_pick, overhang_or_impossible through the generator (running).
 - balance_pick and overhang_or_impossible have n=5.
 - hidden_weight true rate unknown (between 1/10 and 6/10).
 - `docs/findings.md` keeps retracted claims in place with CORRECTION notes; `docs/decisions.md` is long (44 KB).

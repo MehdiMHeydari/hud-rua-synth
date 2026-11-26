@@ -82,13 +82,13 @@ What the agent sees and does matters as much as the model. JustRUA raised one be
 |---|---|---|---|---|
 | max_overhang | `tasks/max_overhang.yaml` | Regenerated from one line | 5/18 | [1](https://www.hud.ai/jobs/193ec7c258ab4d6a8730d7ab79144f26), [2](https://www.hud.ai/jobs/1652b36b603e4e66b43121918fe6aaa8), [3](https://www.hud.ai/jobs/423adafa92cc48febbc22d8a1cfe5c68) |
 | balance_sort | `tasks/balance_sort.yaml` | Regenerated from one line | 1/12 | [1](https://www.hud.ai/jobs/6ca5c2608aea48dfb85781c7ff4dd899), [2](https://www.hud.ai/jobs/71b00f9d00244b08a137b0d87bfe33a3), [3](https://www.hud.ai/jobs/7aea5806aff543a585425c93a918b480) |
-| weighted_overhang | `tasks/weighted_overhang.yaml` | Not yet | 0/12 | [1](https://www.hud.ai/jobs/3a19fb37768e49afb70514660a3acb7f), [2](https://www.hud.ai/jobs/2f29cee8ff454abf849e33412d0b3654), [3](https://www.hud.ai/jobs/d941c18f07d340e395c9fe23de0e6ec7), [4](https://www.hud.ai/jobs/522e6996f902453ab6b7db4ca8f7e653) |
+| weighted_overhang | `tasks/weighted_overhang.yaml` | Failed after 5 rounds | 0/12 | [1](https://www.hud.ai/jobs/3a19fb37768e49afb70514660a3acb7f), [2](https://www.hud.ai/jobs/2f29cee8ff454abf849e33412d0b3654), [3](https://www.hud.ai/jobs/d941c18f07d340e395c9fe23de0e6ec7), [4](https://www.hud.ai/jobs/522e6996f902453ab6b7db4ca8f7e653) |
 | balance_pick | `tasks/balance_pick.yaml` | Regenerated from one line | 1/5 | [1](https://www.hud.ai/jobs/8b16fde453ee4fc2a8627a981134b14a) |
-| overhang_or_impossible | `tasks/overhang_or_impossible.yaml` | Not yet | 3/5 | [1](https://www.hud.ai/jobs/fec577767283441394044b47c5531d9c) |
+| overhang_or_impossible | `tasks/overhang_or_impossible.yaml` | Regenerated from one line | 3/5 | [1](https://www.hud.ai/jobs/fec577767283441394044b47c5531d9c) |
 
 All five pass every free check, and the scripted solution works 5/5 through the real tool.
 
-I wrote all five specs by hand first, and the rollouts above ran on those. I then gave the generator a one-line intent for each. It rebuilt three of them, and its versions pass the same checks (`tasks/generated/`, waiting for approval). For the other two it had not produced a passing version when I stopped.
+I wrote all five specs by hand first, and the rollouts above ran on those. I then gave the generator a one-line intent for each. It rebuilt four of them, and its versions pass the same checks (`tasks/generated/`, waiting for approval). It failed on weighted_overhang after five rounds: it could not find a stack of off-centre blocks that still stands when every placement is 5 mm off. That is the hardest scripted solution of the five, and it took me several tries by hand too.
 
 To run one: `TASK=max_overhang HUD_LLM_MODEL=gpt-6-astra STEPS=60 EPISODES=5 python rua/run.py`
 

@@ -1,0 +1,36 @@
+name: g_balance_pick
+prompt: >-
+  Three blue cubes look identical but have different masses, and no two differ by less than 50 g.
+  A seesaw, a plank on a central hinge, is fixed to the table. It starts level, and you can use it as a balance.
+  Find the heaviest cube and put it down entirely inside the green circle.
+  Leave the other two cubes resting on the table outside the green circle, with their centres off the green marking.
+  The cubes start on the table, away from the seesaw and the circle.
+# Hidden property: mass (0.22 heavy, 0.15 mid, 0.10 light kg), all 4 cm blue cubes.
+# shuffle swaps their xy per seed, so the heavy one is never at a fixed spot.
+# The seesaw is a 40 cm plank on a hinge 5 cm up. At full tilt it is about 14.5 deg,
+# so a cube with friction 1 does not slide off (tan 14.5 = 0.26).
+# The heaviest end goes down, and pairwise comparisons find the max in at most 2 weighings.
+# The oracle knows the names, so it carries cube_a straight to the zone and never weighs.
+# Zone radius 7 cm = success radius 5 cm + cube half-width 2 cm ("entirely inside the circle").
+# A blind guess succeeds 1/3 of the time. Raise the cube count or shrink the mass gap to harden.
+objects:
+  - {name: cube_a, shape: box, size: [0.04, 0.04, 0.04], color: blue, mass: 0.22, x: [0.37, 0.40], y: [-0.04, 0.02]}
+  - {name: cube_b, shape: box, size: [0.04, 0.04, 0.04], color: blue, mass: 0.15, x: [0.50, 0.53], y: [-0.04, 0.02]}
+  - {name: cube_c, shape: box, size: [0.04, 0.04, 0.04], color: blue, mass: 0.10, x: [0.63, 0.66], y: [-0.04, 0.02]}
+  - {name: balance, shape: seesaw, size: [0.40, 0.08, 0.02], color: wood, pivot: 0.05, damping: 2.0,
+     x: [0.54, 0.56], y: [0.23, 0.25]}
+  - {name: goal, shape: zone, size: [0.14], color: green, x: [0.50, 0.56], y: [-0.30, -0.26]}
+shuffle: [[cube_a, cube_b, cube_c]]
+success:
+  in_zone: {object: cube_a, zone: goal, radius: 0.05}
+  clear: {zone: goal, objects: [cube_b, cube_c]}
+oracle:
+  - {at: cube_a, offset: [0, 0, 0.15], gripper: open}
+  - {at: cube_a, gripper: open}
+  - {at: cube_a, gripper: closed}
+  - {at: cube_a, offset: [0, 0, 0.15], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.15], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.025], gripper: closed}
+  - {at: goal, offset: [0, 0, 0.025], gripper: open}
+  - {at: goal, offset: [0, 0, 0.15], gripper: open}
+knobs: {cubes: 3, min_mass_gap_g: 50, seesaw_damping: 2.0}

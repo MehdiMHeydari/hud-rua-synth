@@ -1,0 +1,66 @@
+name: g_weighted_overhang
+prompt: >-
+  Four 14 x 4 x 3 cm blocks (red, blue, green and yellow) lie on the table next to an 8 cm tall
+  white platform. Apart from colour they look identical and uniform, but their weight may not be
+  evenly spread along their length; you can probe them before building. Build a stack of the
+  blocks on top of the platform, with the red block on top, so that the red block sticks out at
+  least 15 cm past the platform's edge that faces the robot (measured horizontally from that edge
+  to the red block's farthest corner). The red block must stay up on the stack on its own after
+  you let go.
+# Lead 0.10 kg at each block's +x end, shell 0.05 kg: CoM ~4 cm toward the heavy end, so the light
+# end is d = 11 cm from the CoM (uniform 7, heavy end out 3). Ideal overhang = sum_k d_k / k (top k=1):
+# uniform 14.6 cm; red heavy-out 14.9 cm (both < 15); all light-out 22.9 cm.
+# Platform yaw 180 puts its +x face (measured by `overhang`) toward the robot.
+# Oracle grasps each block at its CoM (+4 cm), turns it to world yaw 0 (heavy end over the platform),
+# stacks with s_k = (11 - 2.5 cm) / k: red reaches 17.7 cm, every layer's CoM 2.5 cm inside its support.
+# Platform origin is at its base, so place heights are block centres above the table + 3 mm.
+# v4: block yaw [-110, 175]: the wrist reached tool yaw +149 deg but not -179 deg (seed 0, yellow),
+# and +180 wraps to -180. The heavy end still faces the robot (|yaw| > 90) in ~39% of draws, so
+# which end is heavy can't be guessed from the layout.
+objects:
+  - {name: platform, shape: platform, size: [0.20, 0.20, 0.08], color: white,
+     x: [0.64, 0.66], y: [-0.01, 0.01], yaw: [180, 180]}
+  - {name: blue, shape: box, size: [0.14, 0.04, 0.03], color: blue, mass: 0.05, weight: 0.10,
+     x: [0.36, 0.42], y: [-0.34, -0.28], yaw: [-110, 175]}
+  - {name: green, shape: box, size: [0.14, 0.04, 0.03], color: green, mass: 0.05, weight: 0.10,
+     x: [0.60, 0.66], y: [-0.32, -0.26], yaw: [-110, 175]}
+  - {name: yellow, shape: box, size: [0.14, 0.04, 0.03], color: yellow, mass: 0.05, weight: 0.10,
+     x: [0.36, 0.42], y: [0.28, 0.34], yaw: [-110, 175]}
+  - {name: red, shape: box, size: [0.14, 0.04, 0.03], color: red, mass: 0.05, weight: 0.10,
+     x: [0.60, 0.66], y: [0.26, 0.32], yaw: [-110, 175]}
+success:
+  overhang: {object: red, platform: platform, beyond: 0.15}
+oracle:
+  - {at: blue, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: blue, offset: [0.04, 0, 0], gripper: open}
+  - {at: blue, offset: [0.04, 0, 0], gripper: closed}
+  - {at: blue, offset: [0.04, 0, 0.22], gripper: closed}
+  - {at: platform, offset: [0.011, 0, 0.24], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.011, 0, 0.098], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.011, 0, 0.098], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.011, 0, 0.24], yaw: 180, gripper: open}
+  - {at: green, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: green, offset: [0.04, 0, 0], gripper: open}
+  - {at: green, offset: [0.04, 0, 0], gripper: closed}
+  - {at: green, offset: [0.04, 0, 0.22], gripper: closed}
+  - {at: platform, offset: [0.040, 0, 0.24], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.040, 0, 0.128], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.040, 0, 0.128], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.040, 0, 0.24], yaw: 180, gripper: open}
+  - {at: yellow, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: yellow, offset: [0.04, 0, 0], gripper: open}
+  - {at: yellow, offset: [0.04, 0, 0], gripper: closed}
+  - {at: yellow, offset: [0.04, 0, 0.22], gripper: closed}
+  - {at: platform, offset: [0.082, 0, 0.24], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.082, 0, 0.158], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.082, 0, 0.158], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.082, 0, 0.24], yaw: 180, gripper: open}
+  - {at: red, offset: [0.04, 0, 0.12], gripper: open}
+  - {at: red, offset: [0.04, 0, 0], gripper: open}
+  - {at: red, offset: [0.04, 0, 0], gripper: closed}
+  - {at: red, offset: [0.04, 0, 0.22], gripper: closed}
+  - {at: platform, offset: [0.167, 0, 0.24], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.167, 0, 0.188], yaw: 180, gripper: closed}
+  - {at: platform, offset: [0.167, 0, 0.188], yaw: 180, gripper: open}
+  - {at: platform, offset: [0.167, 0, 0.24], yaw: 180, gripper: open}
+knobs: {blocks: 4, beyond: 0.15, lead_kg: 0.10, yaw_hidden: "-110..175"}
