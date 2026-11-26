@@ -96,12 +96,14 @@ It produced four of the five, and each of its versions passes every check and ha
 |---|---|---|---|
 | max_overhang | 5 of 18 | 2 of 5 | [job](https://www.hud.ai/jobs/ca298106a4f94f63b5dd32a207e521b8) |
 | overhang_or_impossible | 3 of 5 | 4 of 5 | [job](https://www.hud.ai/jobs/26809c2e12d74ea2993f5df18e8b6997) |
-| balance_pick | 1 of 5 | 0 of 2 | [job](https://www.hud.ai/jobs/bbf975219b774c63afb9dde9718a28a3) |
-| balance_sort | 1 of 12 | 0 of 2 | [job](https://www.hud.ai/jobs/005339631d47433f8a4049e841b88dc4) |
+| balance_sort | 1 of 12 | 0 of 5 | [job](https://www.hud.ai/jobs/96f6599ff40b4ce398c4982e7e2e3f99) |
+| balance_pick | 1 of 5 | 4 of 5 | [job](https://www.hud.ai/jobs/394a6c07ec5b4cb58509f3ba4d0c7d13) |
 
-The generated tasks came out about as hard as the hand-written ones. The generator also made its own choices along the way: it colour-coded the circles in balance_sort where I used left-to-right order, and it added a height check to max_overhang that I hadn't thought of.
+Three of the four came out about as hard as mine. The generator also made its own choices along the way: it colour-coded the circles in one balance_sort version where I used left-to-right order, and it added a height check to max_overhang that I hadn't thought of.
 
-The two balance rows count two attempts each because the other three were lost to the wrist jam described in doc 3. The generator laid the plank lengthways where I had laid it crossways. That is a reasonable layout, but it makes Astra turn its wrist a quarter turn about three times per attempt, against about once in three attempts on my layout, and every jam came right after one of those turns. So this is the arm's weak spot showing up under a new layout. I have added a line to the generator's instructions to lay long objects crossways.
+balance_pick came out much easier, and the reason is useful. The generator built a gentler seesaw: the pivot is half as high, so the plank tilts less, and the swing is damped ten times more. My version's difficulty was cubes sliding off a plank that tips sharply, and the generated one mostly removed that. So the difficulty of a task can sit in a few physical numbers that the one-line intent never mentions. This is what the calibration step is for: run on Astra, a version this easy would go back to the generator rather than into the library.
+
+Getting the balance tasks right took one fix. The generator's first versions laid the plank lengthways, which made Astra turn its wrist a quarter turn about three times per attempt and set off the wrist jam described in doc 3 in 6 of 10 attempts. I added one line to the generator's instructions, to lay long objects crossways. The next versions did, and Astra's arm did not jam once in 10 attempts.
 
 The one task the generator could not produce was weighted_overhang. Its scripted solution has to stack four off-centre blocks so that the tower still stands when every placement is 5 mm off. It did not find one in the rounds I gave it. Writing scripted solutions for physically delicate tasks is the generator's weak point, and doc 3 comes back to it.
 
