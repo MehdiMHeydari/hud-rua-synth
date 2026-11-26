@@ -1,0 +1,64 @@
+name: g2_balance_sort
+prompt: >-
+  Three blue cubes on the table look identical but have different weights. The seesaw
+  (a plank on a hinge, laid across the table) starts level and works as a balance. Put
+  two cubes on its two ends and the heavier side goes down. Use it to find out which
+  cube is lightest, which is in the middle and which is heaviest. Then put the lightest
+  cube entirely inside the green circle, the middle one entirely inside the yellow
+  circle, and the heaviest one entirely inside the red circle. Leave each cube released
+  and resting on the table in its circle.
+# Hidden mass: the cubes share size and colour and differ only in `mass` (0.10 / 0.15 / 0.22 kg).
+# The weakest comparison is 0.10 vs 0.15: about 0.09 N*m of net torque at the 0.18 m arms.
+# `shuffle` swaps the cubes' start positions per seed, so the heaviest cube is never always at the
+# same spot. Success names the cube, so it follows the shuffle. Guessing the order succeeds in 1 of 6.
+# Layout:
+#   - cubes in a row at x ~0.35
+#   - seesaw crossways at x 0.55 (yaw 90, so the plank runs along y and the gripper works at yaw 0)
+#   - zones in a row at x 0.75
+# The zones are kept clear of the plank (plank x 0.51-0.59).
+# Zone diameter 10 cm = 2 * (3 cm success radius + 2 cm cube half-side): "entirely inside the circle".
+# The oracle knows the masses, so it places the cubes directly without weighing them.
+objects:
+  - {name: cube_a, shape: box, size: [0.04, 0.04, 0.04], color: blue, mass: 0.10,
+     x: [0.33, 0.37], y: [-0.20, -0.16]}
+  - {name: cube_b, shape: box, size: [0.04, 0.04, 0.04], color: blue, mass: 0.15,
+     x: [0.33, 0.37], y: [-0.02, 0.02]}
+  - {name: cube_c, shape: box, size: [0.04, 0.04, 0.04], color: blue, mass: 0.22,
+     x: [0.33, 0.37], y: [0.16, 0.20]}
+  - {name: balance, shape: seesaw, size: [0.40, 0.08, 0.015], color: wood, pivot: 0.05, damping: 0.3,
+     x: [0.55, 0.55], y: [0.0, 0.0], yaw: [90, 90]}
+  - {name: zone_light, shape: zone, size: [0.10], color: green, x: [0.75, 0.75], y: [-0.18, -0.18]}
+  - {name: zone_mid, shape: zone, size: [0.10], color: yellow, x: [0.75, 0.75], y: [0.0, 0.0]}
+  - {name: zone_heavy, shape: zone, size: [0.10], color: red, x: [0.75, 0.75], y: [0.18, 0.18]}
+shuffle: [[cube_a, cube_b, cube_c]]
+success:
+  in_zone:
+    - {object: cube_a, zone: zone_light, radius: 0.03}
+    - {object: cube_b, zone: zone_mid, radius: 0.03}
+    - {object: cube_c, zone: zone_heavy, radius: 0.03}
+oracle:
+  - {at: cube_a, offset: [0, 0, 0.15], gripper: open}
+  - {at: cube_a, gripper: open}
+  - {at: cube_a, gripper: closed}
+  - {at: cube_a, offset: [0, 0, 0.15], gripper: closed}
+  - {at: zone_light, offset: [0, 0, 0.17], gripper: closed}
+  - {at: zone_light, offset: [0, 0, 0.025], gripper: closed}
+  - {at: zone_light, offset: [0, 0, 0.025], gripper: open}
+  - {at: zone_light, offset: [0, 0, 0.17], gripper: open}
+  - {at: cube_b, offset: [0, 0, 0.15], gripper: open}
+  - {at: cube_b, gripper: open}
+  - {at: cube_b, gripper: closed}
+  - {at: cube_b, offset: [0, 0, 0.15], gripper: closed}
+  - {at: zone_mid, offset: [0, 0, 0.17], gripper: closed}
+  - {at: zone_mid, offset: [0, 0, 0.025], gripper: closed}
+  - {at: zone_mid, offset: [0, 0, 0.025], gripper: open}
+  - {at: zone_mid, offset: [0, 0, 0.17], gripper: open}
+  - {at: cube_c, offset: [0, 0, 0.15], gripper: open}
+  - {at: cube_c, gripper: open}
+  - {at: cube_c, gripper: closed}
+  - {at: cube_c, offset: [0, 0, 0.15], gripper: closed}
+  - {at: zone_heavy, offset: [0, 0, 0.17], gripper: closed}
+  - {at: zone_heavy, offset: [0, 0, 0.025], gripper: closed}
+  - {at: zone_heavy, offset: [0, 0, 0.025], gripper: open}
+  - {at: zone_heavy, offset: [0, 0, 0.17], gripper: open}
+knobs: {n_cubes: 3, min_mass_ratio: 1.47, seesaw_damping: 0.3, plank_length: 0.40}

@@ -17,4 +17,4 @@ if [ ! -d ../rua-envs ]; then
 fi
 
 [ -f .env ] || cp .env.example .env
-echo "Done. Put your HUD_API_KEY in .env, then run: source .venv/bin/activate && claude"
+echo "Done. Put your HUD_API_KEY in .env, then run: source .venv/bin/activate"

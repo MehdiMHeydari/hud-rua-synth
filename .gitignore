@@ -1,6 +1,4 @@
 # private context, never commit
-CLAUDE.md
-.claude/
 notes/
 
 # secrets

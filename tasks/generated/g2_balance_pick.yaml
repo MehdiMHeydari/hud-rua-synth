@@ -1,0 +1,39 @@
+name: g2_balance_pick
+prompt: >-
+  Three white 4 cm cubes look identical but have different masses. A wooden seesaw (a plank on a
+  central hinge) lies across the table; it starts level, and the table stops its ends. Use the
+  seesaw as a balance to work out which cube is the heaviest. Then put only the heaviest cube
+  entirely inside the green circle, and leave it there at rest. The other two cubes must end up at
+  rest with their centres outside the green circle, anywhere else on the table or on the seesaw.
+objects:
+  # Neutral names, so the name gives no hint: cube_b is the heaviest (0.22 kg), cube_c the middle
+  # (0.15 kg) and cube_a the lightest (0.10 kg). Mass is invisible, and `shuffle` swaps their
+  # spots per seed, so a fixed position never marks the heavy one.
+  - {name: cube_a, shape: box, size: [0.04, 0.04, 0.04], color: white, mass: 0.10, x: [0.38, 0.42], y: [-0.22, -0.18]}
+  - {name: cube_b, shape: box, size: [0.04, 0.04, 0.04], color: white, mass: 0.22, x: [0.38, 0.42], y: [-0.02, 0.02]}
+  - {name: cube_c, shape: box, size: [0.04, 0.04, 0.04], color: white, mass: 0.15, x: [0.38, 0.42], y: [0.18, 0.22]}
+  # The plank lies crossways (along y), so the gripper sets cubes on its ends at yaw 0. Its ends
+  # are at y +-0.20 and x 0.62-0.64, clear of the cube row at x 0.38-0.42.
+  - {name: seesaw, shape: seesaw, size: [0.40, 0.08, 0.015], color: wood, pivot: 0.04, damping: 0.5,
+     x: [0.62, 0.64], y: [-0.02, 0.02], yaw: [90, 90]}
+  # The zone has a 7 cm radius, which is the 5 cm success radius plus the cube's 2 cm half-width,
+  # so "entirely inside the circle" matches in_zone radius 0.05. The zone edge (y >= 0.31) stays
+  # more than 7 cm from the nearest cube's centre (y <= 0.22).
+  - {name: target, shape: zone, size: [0.14], color: green, x: [0.42, 0.44], y: [0.38, 0.40]}
+shuffle: [[cube_a, cube_b, cube_c]]
+success:
+  in_zone: {object: cube_b, zone: target, radius: 0.05}
+  clear: {zone: target, objects: [cube_a, cube_c]}
+# The oracle knows which cube is heavy (by name), so it skips the weighing. It picks cube_b at
+# its shuffled pose, carries it at 15 cm height, and releases it 5 mm above the table at the
+# zone centre.
+oracle:
+  - {at: cube_b, offset: [0, 0, 0.15], gripper: open}
+  - {at: cube_b, gripper: open}
+  - {at: cube_b, gripper: closed}
+  - {at: cube_b, offset: [0, 0, 0.15], gripper: closed}
+  - {at: target, offset: [0, 0, 0.15], gripper: closed}
+  - {at: target, offset: [0, 0, 0.025], gripper: closed}
+  - {at: target, offset: [0, 0, 0.025], gripper: open}
+  - {at: target, offset: [0, 0, 0.15], gripper: open}
+knobs: {cubes: 3, heavy_vs_middle_kg: 0.07, middle_vs_light_kg: 0.05, seesaw_damping: 0.5, plank_length: 0.40}
